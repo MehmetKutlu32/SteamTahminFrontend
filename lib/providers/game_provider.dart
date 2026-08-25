@@ -40,7 +40,9 @@ class GameProvider extends ChangeNotifier {
   final ApiService _apiService;
 
   GameProvider({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+      : _apiService = apiService ?? ApiService() {
+    checkDailyQuestsReset();
+  }
 
   // Currency & Player Profile (Tüm modlar arasında ortak kalıcı ilerleme)
   String? _activeUserId;

@@ -251,9 +251,27 @@ class _MainMenuScreenState extends State<MainMenuScreen> with SingleTickerProvid
                 labelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, letterSpacing: 0.2),
                 unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 tabs: const [
-                  Tab(text: '🏰 Solo'),
-                  Tab(text: '⚡ Meydan Oku'),
-                  Tab(text: '🥊 1v1 Düello'),
+                  Tab(
+                    height: 36,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('🏰 Solo'),
+                    ),
+                  ),
+                  Tab(
+                    height: 36,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('⚡ Meydan Oku'),
+                    ),
+                  ),
+                  Tab(
+                    height: 36,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('🥊 1v1 Düello'),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -641,9 +659,13 @@ class _MainMenuScreenState extends State<MainMenuScreen> with SingleTickerProvid
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: SteamColors.textMuted, fontSize: 10.5), maxLines: 1),
+          Text(label, style: const TextStyle(color: SteamColors.textMuted, fontSize: 10.5), maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );
@@ -703,18 +725,22 @@ class _MainMenuScreenState extends State<MainMenuScreen> with SingleTickerProvid
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
                             child: Text(
                               title,
                               style: const TextStyle(
                                 color: SteamColors.textPrimary,
-                                fontSize: 13.5,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.4,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
