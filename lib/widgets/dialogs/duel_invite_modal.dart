@@ -45,12 +45,23 @@ class _DuelInviteModalState extends State<DuelInviteModal> {
         '📲 Oyunu İndir: https://github.com/MehmetKutlu32/SteamTahminFrontend';
   }
 
-  void _copyInviteText(String hostName) {
+  Future<void> _shareInvite(String hostName) async {
     final text = _getInviteText(hostName);
     Clipboard.setData(ClipboardData(text: text));
     HapticFeedback.mediumImpact();
     setState(() => _isCopied = true);
 
+    try {
+      const channel = MethodChannel('com.example.steam_tahmin_frontend/gallery');
+      await channel.invokeMethod('shareText', {
+        'text': text,
+        'subject': '1v1 Steam Tahmin Düello Daveti',
+      });
+    } catch (e) {
+      debugPrint('Native share failed: $e');
+    }
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: const Color(0xFF1B2838),
@@ -64,7 +75,7 @@ class _DuelInviteModalState extends State<DuelInviteModal> {
             Text('📋 ', style: TextStyle(fontSize: 18)),
             Expanded(
               child: Text(
-                'Davet Linki ve Oda Kodu Panoya Kopyalandı! Arkadaşına Gönder!',
+                'Davet Linki Kopyalandı ve Paylaşım Ekranı Açıldı!',
                 style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
               ),
             ),
@@ -390,14 +401,14 @@ class _DuelInviteModalState extends State<DuelInviteModal> {
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () => _copyInviteText(hostName),
+                onPressed: () => _shareInvite(hostName),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(_isCopied ? Icons.check_circle_rounded : Icons.share_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      _isCopied ? 'KOD & DAVET LİNKİ KOPYALANDI!' : 'DAVET LİNKİNİ & KODU PAYLAŞ',
+                      _isCopied ? 'KOD PAYLAŞILDI & KOPYALANDI!' : 'DAVET LİNKİNİ & KODU PAYLAŞ',
                       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
                     ),
                   ],

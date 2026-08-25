@@ -67,13 +67,36 @@ class DuelWaitingRoomWidget extends StatelessWidget {
                       roomCode ?? '',
                       style: const TextStyle(
                         color: Colors.amberAccent,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: 3.5,
                       ),
                     ),
                     const SizedBox(width: 14),
-                    const Icon(Icons.copy_rounded, color: Colors.amberAccent, size: 22),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.4)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.content_copy_rounded, color: Colors.amberAccent, size: 15),
+                          SizedBox(width: 4),
+                          Text(
+                            'KOPYALA',
+                            style: TextStyle(
+                              color: Colors.amberAccent,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

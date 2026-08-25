@@ -38,6 +38,22 @@ class MainActivity : FlutterActivity() {
                 } catch (e: Exception) {
                     result.error("EXCEPTION", e.message, null)
                 }
+            } else if (call.method == "shareText") {
+                val text = call.argument<String>("text") ?: ""
+                val subject = call.argument<String>("subject") ?: "1v1 Steam Tahmin Düello Daveti"
+                try {
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, text)
+                        putExtra(Intent.EXTRA_SUBJECT, subject)
+                        type = "text/plain"
+                    }
+                    val shareIntent = Intent.createChooser(sendIntent, "Düello Davetini Paylaş")
+                    activity.startActivity(shareIntent)
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.error("SHARE_ERROR", e.message, null)
+                }
             } else {
                 result.notImplemented()
             }
