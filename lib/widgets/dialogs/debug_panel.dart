@@ -4,11 +4,17 @@ import 'package:provider/provider.dart';
 
 import '../../models/roguelike_models.dart';
 import '../../providers/game_provider.dart';
+import '../../services/auth_service.dart';
 import '../../services/local_round_cache_service.dart';
 import '../../theme/steam_theme.dart';
 
 class DebugPanelModal {
   static void show(BuildContext context) {
+    final authService = context.read<AuthService>();
+    if (!authService.isAdmin) {
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

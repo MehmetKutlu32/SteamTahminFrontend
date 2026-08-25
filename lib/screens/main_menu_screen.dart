@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/roguelike_models.dart';
 import '../providers/game_provider.dart';
+import '../services/auth_service.dart';
 import '../services/update_service.dart';
 import '../theme/steam_theme.dart';
 import '../widgets/branding/app_logo_widget.dart';
@@ -204,12 +205,14 @@ class _MainMenuScreenState extends State<MainMenuScreen> with SingleTickerProvid
                       ),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.bug_report_rounded, color: Colors.amberAccent, size: 19),
-                    tooltip: 'Geliştirici Paneli',
-                    onPressed: () => DebugPanelModal.show(context),
-                  ),
+                  if (context.watch<AuthService>().isAdmin) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.bug_report_rounded, color: Colors.amberAccent, size: 19),
+                      tooltip: 'Geliştirici Paneli',
+                      onPressed: () => DebugPanelModal.show(context),
+                    ),
+                  ],
                 ],
               ),
             ),

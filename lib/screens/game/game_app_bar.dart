@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../services/auth_service.dart';
 import '../../theme/steam_theme.dart';
 import '../../widgets/dialogs/active_relics_modal.dart';
 import '../../widgets/dialogs/debug_panel.dart';
@@ -154,14 +155,15 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () => ShopModal.show(context),
               ),
 
-              // Debug Butonu
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                icon: const Icon(Icons.bug_report_outlined, color: Colors.amber, size: 17),
-                tooltip: 'Test Paneli',
-                onPressed: () => DebugPanelModal.show(context),
-              ),
+              // Debug Butonu (Sadece mehmet58kutlu@gmail.com için görünür)
+              if (context.watch<AuthService>().isAdmin)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  icon: const Icon(Icons.bug_report_outlined, color: Colors.amber, size: 17),
+                  tooltip: 'Test Paneli',
+                  onPressed: () => DebugPanelModal.show(context),
+                ),
 
               // Pes Et Butonu (Sahtekar modunda pas geçme/pes etme yoktur)
               if (!provider.isImposterMode && !isRoundFinished && onGiveUp != null)

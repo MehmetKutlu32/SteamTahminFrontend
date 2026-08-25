@@ -22,6 +22,13 @@ class AuthService {
   bool get isLoggedIn => _currentUser != null && !_currentUser!.isGuest;
   bool get isGuest => _currentUser != null && _currentUser!.isGuest;
 
+  static const List<String> adminEmails = ['mehmet58kutlu@gmail.com'];
+
+  bool get isAdmin =>
+      _currentUser != null &&
+      _currentUser!.email != null &&
+      adminEmails.contains(_currentUser!.email!.trim().toLowerCase());
+
   /// Kayıtlı kullanıcı oturumunu yerel depolamadan yükle
   Future<UserModel?> loadSavedUser() async {
     try {
