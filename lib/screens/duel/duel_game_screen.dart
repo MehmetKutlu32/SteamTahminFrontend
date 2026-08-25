@@ -199,6 +199,87 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
   bool get _isMatchOver =>
       _targetScore > 0 && (_player1Score >= _targetScore || _player2Score >= _targetScore);
 
+  void _showSurrenderDialog() {
+    if (_isMatchOver) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF131D29),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: SteamColors.cardBorder),
+        ),
+        title: const Row(
+          children: [
+            Text('🏳️ ', style: TextStyle(fontSize: 20)),
+            Text('Pes Et / Maçı Bitir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Hangi oyuncu pes etmek istiyor? Pes eden taraf hükmen mağlup sayılacaktır.',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.flag_rounded, color: Colors.black, size: 16),
+              label: Text('$_p1Name Pes Etsin', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.cyanAccent,
+                minimumSize: const Size.fromHeight(42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _surrenderPlayer(1);
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.flag_rounded, color: Colors.white, size: 16),
+              label: Text('$_p2Name Pes Etsin', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orangeAccent.withValues(alpha: 0.8),
+                minimumSize: const Size.fromHeight(42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _surrenderPlayer(2);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Vazgeç', style: TextStyle(color: Colors.white54)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _surrenderPlayer(int playerNum) {
+    _stopTurnTimer();
+    final provider = context.read<GameProvider>();
+    setState(() {
+      if (playerNum == 1) {
+        _player2Score = _targetScore;
+        _roundResultMessage = '🏳️ $_p1Name pes etti! $_p2Name maçı kazandı!';
+      } else {
+        _player1Score = _targetScore;
+        _roundResultMessage = '🏳️ $_p2Name pes etti! $_p1Name maçı kazandı!';
+      }
+    });
+    final winner = playerNum == 1 ? 2 : 1;
+    provider.recordDuelWin(winner);
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GameProvider>();
@@ -232,6 +313,12 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
             tooltip: 'Maç Ayarları, Süre & İsimler',
             onPressed: () => _openSettingsModal(),
           ),
+          if (!_isMatchOver)
+            IconButton(
+              icon: const Icon(Icons.flag_rounded, color: Colors.redAccent),
+              tooltip: 'Pes Et / Maçı Bitir',
+              onPressed: _showSurrenderDialog,
+            ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
             tooltip: 'Skorları Sıfırla',
@@ -263,6 +350,7 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
                 isMatchOver: _isMatchOver,
                 isCompact: isKeyboardOpen,
                 onPassTurn: (!_isMatchOver && !provider.isLoadingRound) ? _onPassTurn : null,
+                onSurrender: (!_isMatchOver && !provider.isLoadingRound) ? _showSurrenderDialog : null,
               ),
               const SizedBox(height: 8),
 

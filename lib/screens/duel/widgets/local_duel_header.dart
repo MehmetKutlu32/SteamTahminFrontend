@@ -13,6 +13,7 @@ class LocalDuelHeader extends StatelessWidget {
   final bool isMatchOver;
   final bool isCompact;
   final VoidCallback? onPassTurn;
+  final VoidCallback? onSurrender;
 
   const LocalDuelHeader({
     super.key,
@@ -27,6 +28,7 @@ class LocalDuelHeader extends StatelessWidget {
     required this.isMatchOver,
     this.isCompact = false,
     this.onPassTurn,
+    this.onSurrender,
   });
 
   @override
@@ -41,7 +43,7 @@ class LocalDuelHeader extends StatelessWidget {
     // KLAVYE AÇIKKEN KOMPAKT TEK SATIR BAŞLIK (Yer tasarrufu sağlar)
     if (isCompact && !isMatchOver) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: isP1Turn
               ? Colors.cyanAccent.withValues(alpha: 0.15)
@@ -59,12 +61,12 @@ class LocalDuelHeader extends StatelessWidget {
               '$player1Name: $player1Score$targetStr',
               style: TextStyle(
                 color: isP1Turn ? Colors.cyanAccent : Colors.white60,
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: isP1Turn ? FontWeight.bold : FontWeight.w500,
               ),
             ),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6),
+              padding: EdgeInsets.symmetric(horizontal: 4),
               child: Text('•', style: TextStyle(color: Colors.white24)),
             ),
             // Oyuncu 2 Skor
@@ -72,7 +74,7 @@ class LocalDuelHeader extends StatelessWidget {
               '$player2Name: $player2Score$targetStr',
               style: TextStyle(
                 color: !isP1Turn ? Colors.orangeAccent : Colors.white60,
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: !isP1Turn ? FontWeight.bold : FontWeight.w500,
               ),
             ),
@@ -81,26 +83,26 @@ class LocalDuelHeader extends StatelessWidget {
             if (turnTimeLimit > 0) ...[
               Icon(
                 Icons.timer_rounded,
-                size: 13,
+                size: 12,
                 color: isUrgent ? Colors.redAccent : (isWarning ? Colors.amberAccent : Colors.white70),
               ),
-              const SizedBox(width: 3),
+              const SizedBox(width: 2),
               Text(
                 '${remainingTurnSeconds}s',
                 style: TextStyle(
                   color: isUrgent ? Colors.redAccent : (isWarning ? Colors.amberAccent : Colors.white),
                   fontWeight: FontWeight.bold,
-                  fontSize: 11.5,
+                  fontSize: 11,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
             ],
             // Pas Geç Butonu
-            if (onPassTurn != null)
+            if (onPassTurn != null) ...[
               InkWell(
                 onTap: onPassTurn,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.white10,
                     borderRadius: BorderRadius.circular(6),
@@ -108,7 +110,26 @@ class LocalDuelHeader extends StatelessWidget {
                   ),
                   child: const Text(
                     '⏭️ Pas',
-                    style: TextStyle(color: Colors.amberAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: Colors.amberAccent, fontSize: 10.5, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
+            // Pes Et Butonu
+            if (onSurrender != null)
+              InkWell(
+                onTap: onSurrender,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                  ),
+                  child: const Text(
+                    '🏳️ Pes',
+                    style: TextStyle(color: Colors.redAccent, fontSize: 10.5, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -227,6 +248,35 @@ class LocalDuelHeader extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (onSurrender != null) ...[
+                  const SizedBox(width: 6),
+                  InkWell(
+                    onTap: onSurrender,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('🏳️ ', style: TextStyle(fontSize: 12)),
+                          Text(
+                            'Pes Et',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
