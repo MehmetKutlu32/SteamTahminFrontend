@@ -152,6 +152,16 @@ copies or substantial portions of the Software.
 
 ---
 
+## ⚠️ Disclaimer & Legal Notice
+
+This project is an independent, non-profit community project and is **not affiliated with, associated with, authorized, endorsed by, or in any way officially connected with Valve Corporation, Steam, or any of their subsidiaries or affiliates.**
+
+- **Steam** and the **Steam logo** are trademarks and/or registered trademarks of **Valve Corporation** in the U.S. and/or other countries.
+- All game titles, images, descriptions, reviews, and related media referenced within this application are the property and copyright of their respective owners and publishers.
+- This application is developed strictly for educational and trivia purposes under fair use.
+
+---
+
 <div align="center">
-  <sub>Steam® is a registered trademark of Valve Corporation. This project is an open-source, non-profit community trivia game.</sub>
+  <sub>Steam® is a registered trademark of Valve Corporation. This project is an independent open-source trivia game.</sub>
 </div>
