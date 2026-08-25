@@ -12,6 +12,7 @@ class DuelScoreboard extends StatelessWidget {
   final String? p1FrameId;
   final String? p2AvatarEmoji;
   final String? p2FrameId;
+  final bool isCompact;
 
   const DuelScoreboard({
     super.key,
@@ -25,10 +26,42 @@ class DuelScoreboard extends StatelessWidget {
     this.p1FrameId,
     this.p2AvatarEmoji,
     this.p2FrameId,
+    this.isCompact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final targetStr = targetScore > 0 ? '/$targetScore' : '';
+
+    if (isCompact) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: const BoxDecoration(
+          color: Color(0xFF131A26),
+          border: Border(bottom: BorderSide(color: Colors.white12, width: 1)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${p1AvatarEmoji ?? "🤖"} $player1Name: $player1Score$targetStr',
+              style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 11.5),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(4)),
+              child: Text('R$currentRound', style: const TextStyle(color: Colors.amberAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+            ),
+            Text(
+              '$player2Score$targetStr :$player2Name ${p2AvatarEmoji ?? "🦊"}',
+              style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 11.5),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

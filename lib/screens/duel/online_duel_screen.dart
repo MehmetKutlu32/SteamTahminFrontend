@@ -483,6 +483,7 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
     final List<GameItem> gameList = provider.gamesList;
     final reviews = _currentRoundData?.yorumlar ?? [];
     final isMyTurn = _isMyTurn;
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Column(
       children: [
@@ -497,12 +498,13 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
           p1FrameId: _isHost ? (provider.equippedFrameId ?? 'frame_gold') : 'frame_gold',
           p2AvatarEmoji: !_isHost ? (provider.equippedAvatar?.iconEmoji ?? '🦊') : '🐱',
           p2FrameId: !_isHost ? (provider.equippedFrameId ?? 'frame_diamond') : 'frame_diamond',
+          isCompact: isKeyboardOpen,
         ),
 
-        // Sıra ve Geri Sayım Sayacı Banner'ı
+        // Sıra, Sayaç & Pas Geç Banner'ı
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           color: isMyTurn
               ? Colors.amberAccent.withValues(alpha: 0.18)
               : const Color(0xFF161F2E),
@@ -511,52 +513,80 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
             children: [
               Row(
                 children: [
-                  Text(isMyTurn ? '🎯 ' : '⏳ ', style: const TextStyle(fontSize: 15)),
+                  Text(isMyTurn ? '🎯 ' : '⏳ ', style: const TextStyle(fontSize: 14)),
                   Text(
                     isMyTurn
-                        ? 'SIRA SENDE! Tahminini yap'
-                        : 'Sıra $_currentTurnPlayer\'da',
+                        ? 'SIRA SENDE!'
+                        : 'Sıra: $_currentTurnPlayer',
                     style: TextStyle(
                       color: isMyTurn ? Colors.amberAccent : Colors.white60,
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              if (_turnTimeLimit > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _remainingSeconds <= 5
-                        ? Colors.redAccent.withValues(alpha: 0.25)
-                        : Colors.white12,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: _remainingSeconds <= 5 ? Colors.redAccent : Colors.white24,
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.timer_rounded,
-                        size: 13,
-                        color: _remainingSeconds <= 5 ? Colors.redAccent : Colors.amberAccent,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${_remainingSeconds}s',
-                        style: TextStyle(
-                          color: _remainingSeconds <= 5 ? Colors.redAccent : Colors.white,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_turnTimeLimit > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _remainingSeconds <= 5
+                            ? Colors.redAccent.withValues(alpha: 0.25)
+                            : Colors.white12,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: _remainingSeconds <= 5 ? Colors.redAccent : Colors.white24,
+                          width: 0.8,
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.timer_rounded,
+                            size: 12,
+                            color: _remainingSeconds <= 5 ? Colors.redAccent : Colors.amberAccent,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${_remainingSeconds}s',
+                            style: TextStyle(
+                              color: _remainingSeconds <= 5 ? Colors.redAccent : Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (isMyTurn && !_isMyGuessSubmitted) ...[
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: _passTurn,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.6)),
+                        ),
+                        child: const Text(
+                          '⏭️ Pas',
+                          style: TextStyle(
+                            color: Colors.amberAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
@@ -564,18 +594,18 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
         if (_turnStatusBanner != null)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             color: Colors.orangeAccent.withValues(alpha: 0.15),
             child: Text(
               _turnStatusBanner!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.orangeAccent, fontSize: 11.5),
+              style: const TextStyle(color: Colors.orangeAccent, fontSize: 11),
             ),
           ),
 
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -623,7 +653,7 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 DuelReviewsList(
                   reviews: reviews,
                   revealedCount: _revealedReviewCount,
@@ -634,34 +664,13 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
           ),
         ),
 
-        // Tahmin Girişi & Pas Geç Butonu
+        // %100 Ferah Tam Genişlikte Tahmin Girişi
         if (isMyTurn && !_isMyGuessSubmitted)
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GameGuessInput(
-                    games: gameList,
-                    onSubmitted: (name) => _submitGuess(name),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.skip_next_rounded, color: Colors.amberAccent, size: 18),
-                  label: const Text(
-                    'Pas',
-                    style: TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amberAccent.withValues(alpha: 0.15),
-                    side: const BorderSide(color: Colors.amberAccent, width: 1),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
-                  ),
-                  onPressed: _passTurn,
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: GameGuessInput(
+              games: gameList,
+              onSubmitted: (name) => _submitGuess(name),
             ),
           )
         else if (!isMyTurn)
