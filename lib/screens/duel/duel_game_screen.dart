@@ -302,47 +302,61 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
                 )
               else
                 Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GameGuessInput(
-                            games: provider.gamesList,
-                            isEnabled: !_isMatchOver && !provider.isLoadingRound,
-                            onSubmitted: (guess) => _submitDuelGuess(provider, guess),
+                    // Pas Geç & Sıra Bilgisi Üst Çubuğu
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6, left: 4, right: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('🎯 ', style: TextStyle(fontSize: 14)),
+                              Text(
+                                'Sıra: ${_currentTurnPlayer == 1 ? _p1Name : _p2Name}',
+                                style: const TextStyle(
+                                  color: Colors.amberAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Tooltip(
-                          message: 'Sırayı Rakibe Devret ve İpucu Aç',
-                          child: InkWell(
+                          InkWell(
                             onTap: (!_isMatchOver && !provider.isLoadingRound) ? _onPassTurn : null,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1E293B),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: Colors.white24),
                               ),
                               child: const Row(
                                 children: [
-                                  Text('⏭️', style: TextStyle(fontSize: 16)),
-                                  SizedBox(width: 4),
+                                  Text('⏭️ ', style: TextStyle(fontSize: 12)),
                                   Text(
-                                    'Pas',
+                                    'Pas Geç (İpucu Aç)',
                                     style: TextStyle(
                                       color: Colors.white70,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 13,
+                                      fontSize: 11.5,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+
+                    // %100 Tam Genişlikte Ferah Tahmin Giriş Çubuğu
+                    GameGuessInput(
+                      games: provider.gamesList,
+                      isEnabled: !_isMatchOver && !provider.isLoadingRound,
+                      onSubmitted: (guess) => _submitDuelGuess(provider, guess),
                     ),
                   ],
                 ),
