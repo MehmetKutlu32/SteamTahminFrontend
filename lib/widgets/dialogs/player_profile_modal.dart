@@ -470,13 +470,26 @@ class PlayerProfileModal extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
-                            updateService.statusMessage ?? (updateService.currentPatch != null ? 'Yama #${updateService.currentPatch} Aktif' : 'En güncel sürümdesiniz'),
-                            style: TextStyle(
-                              color: updateService.isUpdateReady ? Colors.greenAccent : Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Sürüm ${UpdateService.appVersion}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                updateService.statusMessage ?? 'En güncel sürümdesiniz',
+                                style: TextStyle(
+                                  color: updateService.isUpdateReady ? Colors.greenAccent : Colors.white60,
+                                  fontSize: 10.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         if (updateService.isChecking)
