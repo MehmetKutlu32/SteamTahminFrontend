@@ -44,11 +44,47 @@ class _GameGuessInputState extends State<GameGuessInput> {
     super.dispose();
   }
 
+  static String _normalize(String text) {
+    var s = text.toLowerCase().trim();
+    s = s
+        .replaceAll('ı', 'i')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('ö', 'o')
+        .replaceAll('ç', 'c')
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return s;
+  }
+
+  static int _levenshtein(String s1, String s2) {
+    if (s1 == s2) return 0;
+    if (s1.isEmpty) return s2.length;
+    if (s2.isEmpty) return s1.length;
+
+    List<int> v0 = List<int>.generate(s2.length + 1, (i) => i);
+    List<int> v1 = List<int>.filled(s2.length + 1, 0);
+
+    for (int i = 0; i < s1.length; i++) {
+      v1[0] = i + 1;
+      for (int j = 0; j < s2.length; j++) {
+        int cost = (s1[i] == s2[j]) ? 0 : 1;
+        v1[j + 1] = [v1[j] + 1, v0[j + 1] + 1, v0[j] + cost].reduce((a, b) => a < b ? a : b);
+      }
+      for (int j = 0; j <= s2.length; j++) {
+        v0[j] = v1[j];
+      }
+    }
+    return v1[s2.length];
+  }
+
   void _onTextChanged() {
     _debounceTimer?.cancel();
-    final query = _textController.text.trim().toLowerCase();
+    final rawQuery = _textController.text.trim();
 
-    if (query.isEmpty) {
+    if (rawQuery.isEmpty) {
       if (_showSuggestions || _filteredSuggestions.isNotEmpty) {
         setState(() {
           _filteredSuggestions = [];
@@ -58,19 +94,74 @@ class _GameGuessInputState extends State<GameGuessInput> {
       return;
     }
 
-    // Arama debouncing & hızlı arama (Maksimum 6 öneri)
+    // Akıllı Çoklu Kelime & Yazım Hatası Toleranslı (Fuzzy) Arama
     _debounceTimer = Timer(const Duration(milliseconds: 60), () {
-      final List<GameItem> results = [];
+      final normalizedQuery = _normalize(rawQuery);
+      if (normalizedQuery.isEmpty) return;
+
+      final queryTokens = normalizedQuery.split(' ').where((t) => t.isNotEmpty).toList();
       final games = widget.games;
       final int len = games.length;
 
+      final List<MapEntry<GameItem, int>> scoredResults = [];
+
       for (int i = 0; i < len; i++) {
         final game = games[i];
-        if (game.name.toLowerCase().contains(query)) {
-          results.add(game);
-          if (results.length >= 6) break;
+        final normalizedGame = _normalize(game.name);
+        final gameTokens = normalizedGame.split(' ').where((t) => t.isNotEmpty).toList();
+
+        // 1. Doğrudan Başlama veya İçerme (En Yüksek Öncelik)
+        if (normalizedGame.startsWith(normalizedQuery)) {
+          scoredResults.add(MapEntry(game, 100));
+          continue;
+        }
+        if (normalizedGame.contains(normalizedQuery)) {
+          scoredResults.add(MapEntry(game, 80));
+          continue;
+        }
+
+        // 2. Çoklu Kelime & Harf Hatası Toleransı
+        bool allTokensMatched = true;
+        int totalDistance = 0;
+
+        for (final qToken in queryTokens) {
+          bool tokenMatched = false;
+          int minTokenDist = 999;
+
+          for (final gToken in gameTokens) {
+            if (gToken.startsWith(qToken) || gToken.contains(qToken)) {
+              tokenMatched = true;
+              minTokenDist = 0;
+              break;
+            }
+
+            // Yazım hatası toleransı (Kelime uzunluğuna göre 1-2 harf hatası)
+            final maxAllowedDist = qToken.length >= 6 ? 2 : (qToken.length >= 4 ? 1 : 0);
+            if (maxAllowedDist > 0) {
+              final dist = _levenshtein(qToken, gToken);
+              if (dist <= maxAllowedDist && dist < minTokenDist) {
+                minTokenDist = dist;
+                tokenMatched = true;
+              }
+            }
+          }
+
+          if (!tokenMatched) {
+            allTokensMatched = false;
+            break;
+          }
+          totalDistance += minTokenDist;
+        }
+
+        if (allTokensMatched) {
+          final score = (50 - totalDistance * 10).clamp(10, 60);
+          scoredResults.add(MapEntry(game, score));
         }
       }
+
+      // Skorlarına göre sırala ve ilk 8 sonucu al
+      scoredResults.sort((a, b) => b.value.compareTo(a.value));
+      final results = scoredResults.take(8).map((e) => e.key).toList();
 
       if (mounted) {
         setState(() {
@@ -118,7 +209,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Sabit Slot: Canlı Oyun Öneri Paneli (AnimatedSize sayesinde TextField asla unmount olmaz)
+        // 1. Sabit Slot: Canlı Oyun Öneri Paneli
         AnimatedSize(
           key: const ValueKey('game_guess_animated_size'),
           duration: const Duration(milliseconds: 150),
