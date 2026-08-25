@@ -67,6 +67,29 @@ class _LocalDuelReviewsListState extends State<LocalDuelReviewsList> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.roundResultMessage != null && widget.roundResultMessage!.isNotEmpty)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: widget.roundResultMessage!.contains('Doğru')
+                    ? Colors.greenAccent.withValues(alpha: 0.15)
+                    : Colors.amberAccent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: widget.roundResultMessage!.contains('Doğru') ? Colors.greenAccent : Colors.amberAccent,
+                ),
+              ),
+              child: Text(
+                widget.roundResultMessage!,
+                style: TextStyle(
+                  color: widget.roundResultMessage!.contains('Doğru') ? Colors.greenAccent : Colors.amberAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
+                ),
+              ),
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -74,14 +97,6 @@ class _LocalDuelReviewsListState extends State<LocalDuelReviewsList> {
                 'Açılan İpuçları (${widget.revealedCount}/${widget.reviews.length}):',
                 style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
               ),
-              if (widget.roundResultMessage != null)
-                Flexible(
-                  child: Text(
-                    widget.roundResultMessage!,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.amberAccent, fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
             ],
           ),
           const Divider(color: Colors.white10, height: 12),

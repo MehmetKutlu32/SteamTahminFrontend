@@ -168,13 +168,16 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
       _stopTurnTimer();
       HapticFeedback.heavyImpact();
       final currentName = _currentTurnPlayer == 1 ? _p1Name : _p2Name;
+      final gameName = provider.currentRound?.oyunAdi ?? '';
+      final maxReviews = provider.currentRound?.yorumlar.length ?? 5;
       setState(() {
         if (_currentTurnPlayer == 1) {
           _player1Score += 1;
         } else {
           _player2Score += 1;
         }
-        _roundResultMessage = '🎉 $currentName Doğru Bildi! (+1 Puan)';
+        _revealedCount = maxReviews;
+        _roundResultMessage = '🎉 $currentName Doğru Bildi! (+1 Puan)\n🎮 Doğru Cevap: $gameName';
       });
 
       if (_isMatchOver) {
@@ -306,6 +309,8 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
     final winningPlayer = forfeiterPlayer == 1 ? 2 : 1;
     final winnerName = winningPlayer == 1 ? _p1Name : _p2Name;
     final forfeiterName = forfeiterPlayer == 1 ? _p1Name : _p2Name;
+    final gameName = provider.currentRound?.oyunAdi ?? '';
+    final maxReviews = provider.currentRound?.yorumlar.length ?? 5;
 
     setState(() {
       if (winningPlayer == 1) {
@@ -313,7 +318,8 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
       } else {
         _player2Score += 1;
       }
-      _roundResultMessage = '🏳️ $forfeiterName bu raundu geçti. (+1 Puan $winnerName)';
+      _revealedCount = maxReviews;
+      _roundResultMessage = '🏳️ $forfeiterName bu raundu geçti. (+1 Puan $winnerName)\n🎮 Doğru Cevap: $gameName';
     });
 
     if (_isMatchOver) {
