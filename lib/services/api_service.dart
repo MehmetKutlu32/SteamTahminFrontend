@@ -100,6 +100,89 @@ class ApiService {
     }
   }
 
+  /// 4. POST /api/user/google-login
+  Future<Map<String, dynamic>?> googleLogin({
+    required String googleId,
+    required String userName,
+    String? email,
+    String? avatarUrl,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/user/google-login');
+      final body = jsonEncode({
+        'googleId': googleId,
+        'userName': userName,
+        'email': email,
+        'avatarUrl': avatarUrl,
+      });
+      final response = await _post(uri, body);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Cloud google-login error: $e');
+    }
+    return null;
+  }
+
+  /// 5. GET /api/user/profile/{googleId}
+  Future<Map<String, dynamic>?> getProfile(String googleId) async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/user/profile/$googleId');
+      final response = await _get(uri);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Cloud get-profile error: $e');
+    }
+    return null;
+  }
+
+  /// 6. POST /api/user/sync-profile
+  Future<void> syncProfile({
+    required String googleId,
+    required int level,
+    required int xp,
+    required int coins,
+    required int totalGames,
+    required int totalWins,
+    required int eloRating,
+    required int dailyStreak,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/user/sync-profile');
+      final body = jsonEncode({
+        'googleId': googleId,
+        'level': level,
+        'xp': xp,
+        'coins': coins,
+        'totalGames': totalGames,
+        'totalWins': totalWins,
+        'eloRating': eloRating,
+        'dailyStreak': dailyStreak,
+      });
+      await _post(uri, body);
+    } catch (e) {
+      debugPrint('Cloud sync-profile error: $e');
+    }
+  }
+
+  Future<http.Response> _post(Uri uri, String body) async {
+    try {
+      return await _client.post(
+        uri,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+        body: body,
+      ).timeout(_timeout);
+    } catch (e) {
+      throw ApiException('POST $uri failed: $e');
+    }
+  }
+
   /// Helper GET method with redirect handling, host rewriting for Android emulator, and timeout
   Future<http.Response> _get(Uri uri) async {
     try {

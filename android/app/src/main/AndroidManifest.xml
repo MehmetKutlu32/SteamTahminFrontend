@@ -6,6 +6,8 @@
         android:label="Oyun Tahmin"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:fullBackupContent="true"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
+import 'api_service.dart';
 
 class AuthService {
   static const String _keyUserSession = 'user_auth_session';
@@ -70,6 +71,19 @@ class AuthService {
         );
         _currentUser = user;
         await _saveUserSession(user);
+
+        // Bulut veritabanında kullanıcıyı kaydet / getir
+        try {
+          final apiService = ApiService();
+          await apiService.googleLogin(
+            googleId: account.id,
+            userName: account.displayName ?? 'Oyuncu',
+            email: account.email,
+            avatarUrl: account.photoUrl,
+          );
+          apiService.dispose();
+        } catch (_) {}
+
         return user;
       }
     } catch (e) {

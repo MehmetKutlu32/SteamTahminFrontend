@@ -556,6 +556,19 @@ class GameProvider extends ChangeNotifier {
       timeAttackHighScore: _timeAttackHighScore,
       userId: _activeUserId,
     );
+
+    if (_activeUserId != null && _activeUserId!.isNotEmpty) {
+      _apiService.syncProfile(
+        googleId: _activeUserId!,
+        level: PlayerRank.calculateLevel(_totalXp),
+        xp: _totalXp,
+        coins: _coins,
+        totalGames: _totalChestsOpened + _totalTowerWins,
+        totalWins: _totalTowerWins,
+        eloRating: 1000 + (_totalTowerWins * 25),
+        dailyStreak: 1,
+      );
+    }
   }
 
   bool buyShopItem(ShopItem item, {bool payWithDiamonds = false}) {
@@ -840,6 +853,30 @@ class GameProvider extends ChangeNotifier {
     _bestStreak = profile['bestStreak'] ?? 0;
     _totalChestsOpened = profile['totalChestsOpened'] ?? 0;
     _timeAttackHighScore = profile['timeAttackHighScore'] ?? 0;
+
+    // Eğer Google hesabı ise veritabanından en güncel bulut profilini çekip senkronize et
+    if (_activeUserId != null && _activeUserId!.isNotEmpty) {
+      try {
+        final cloudProfile = await _apiService.getProfile(_activeUserId!);
+        if (cloudProfile != null) {
+          final cloudXp = cloudProfile['xp'] as int? ?? 0;
+          final cloudCoins = cloudProfile['coins'] as int? ?? 0;
+          final cloudWins = cloudProfile['totalWins'] as int? ?? 0;
+
+          if (cloudXp > _totalXp) {
+            _totalXp = cloudXp;
+          }
+          if (cloudCoins > _coins) {
+            _coins = cloudCoins;
+          }
+          if (cloudWins > _totalTowerWins) {
+            _totalTowerWins = cloudWins;
+          }
+        }
+      } catch (e) {
+        debugPrint('Cloud profile fetch on init error: $e');
+      }
+    }
 
     final savedDiscovered = (profile['discoveredPerks'] as List<dynamic>?)?.cast<String>() ?? [];
     _discoveredPerkIds.clear();
