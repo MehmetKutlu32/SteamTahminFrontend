@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/local_round_cache_service.dart';
 import '../../theme/steam_theme.dart';
 import '../../widgets/branding/app_logo_widget.dart';
 import '../main_menu_screen.dart';
@@ -114,16 +114,23 @@ class _WelcomeAuthScreenState extends State<WelcomeAuthScreen> {
     try {
       final user = await authService.signInWithGoogle();
       if (user != null && mounted) {
-        final hasGuestProgress = gameProvider.totalGamesPlayed > 0 ||
-            gameProvider.coins > 0 ||
-            gameProvider.level > 1 ||
-            gameProvider.purchasedShopItemIds.isNotEmpty;
+        final hasExistingProfile = await LocalRoundCacheService.hasUserProfile(user.id);
+        final hasGuest = await LocalRoundCacheService.hasGuestProgress();
 
-        if (hasGuestProgress) {
-          final shouldMigrate = await _showMigrationDialog(context, gameProvider);
-          if (shouldMigrate == false && mounted) {
-            gameProvider.resetPlayerProgression();
+        // Yalnızca kullanıcı YENİ ise ve gerçekte cihazda ZİYARETÇİ ilerlemesi varsa sor
+        if (!hasExistingProfile && hasGuest) {
+          final guestData = await LocalRoundCacheService.loadProfileData(userId: null);
+          if (mounted) {
+            final shouldMigrate = await _showMigrationDialog(context, guestData);
+            if (shouldMigrate == true) {
+              await gameProvider.migrateGuestToUser(user.id);
+            } else {
+              await gameProvider.initializeForUser(user);
+            }
           }
+        } else {
+          // Mevcut Google kullanıcısı doğrudan kendi profilini yükler
+          await gameProvider.initializeForUser(user);
         }
 
         if (mounted) {
@@ -146,7 +153,12 @@ class _WelcomeAuthScreenState extends State<WelcomeAuthScreen> {
     }
   }
 
-  Future<bool?> _showMigrationDialog(BuildContext context, GameProvider provider) {
+  Future<bool?> _showMigrationDialog(BuildContext context, Map<String, dynamic> guestData) {
+    final level = 1 + ((guestData['totalXp'] as int? ?? 0) ~/ 100);
+    final coins = guestData['coins'] as int? ?? 50;
+    final diamonds = guestData['diamonds'] as int? ?? 2;
+    final wins = guestData['totalTowerWins'] as int? ?? 0;
+
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -170,7 +182,7 @@ class _WelcomeAuthScreenState extends State<WelcomeAuthScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ziyaretçi olarak kazandığınız ilerleme bulundu:',
+              'Cihazda kayıtlı ziyaretçi (misafir) ilerlemeniz bulundu:',
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 10),
@@ -183,11 +195,11 @@ class _WelcomeAuthScreenState extends State<WelcomeAuthScreen> {
               ),
               child: Column(
                 children: [
-                  _buildStatRow('🎯 Seviye:', 'Lv.${provider.level} (${provider.rankTitle})', Colors.amberAccent),
+                  _buildStatRow('🎯 Seviye:', 'Lv.$level', Colors.amberAccent),
                   const SizedBox(height: 4),
-                  _buildStatRow('🪙 Bakiye:', '${provider.coins} Altın • ${provider.diamonds} Elmas', Colors.cyanAccent),
+                  _buildStatRow('🪙 Bakiye:', '$coins Altın • $diamonds Elmas', Colors.cyanAccent),
                   const SizedBox(height: 4),
-                  _buildStatRow('🏆 Galibiyet:', '${provider.totalWins} Oyun', Colors.greenAccent),
+                  _buildStatRow('🏆 Galibiyet:', '$wins Oyun', Colors.greenAccent),
                 ],
               ),
             ),
@@ -229,14 +241,16 @@ class _WelcomeAuthScreenState extends State<WelcomeAuthScreen> {
   Future<void> _handleGuestSignIn(BuildContext context) async {
     setState(() => _isLoading = true);
     final authService = context.read<AuthService>();
+    final gameProvider = context.read<GameProvider>();
     final guestName = _guestNameController.text.trim().isNotEmpty
         ? _guestNameController.text.trim()
         : (await authService.getLastGuestName() ?? 'Misafir_${DateTime.now().millisecond}');
 
     await authService.saveGuestName(guestName);
-    await authService.signInAsGuest(customName: guestName);
+    final guestUser = await authService.signInAsGuest(customName: guestName);
 
     if (mounted) {
+      await gameProvider.initializeForUser(guestUser);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainMenuScreen()),
       );

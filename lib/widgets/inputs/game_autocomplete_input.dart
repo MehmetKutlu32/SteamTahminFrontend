@@ -22,7 +22,7 @@ class GameGuessInput extends StatefulWidget {
 class _GameGuessInputState extends State<GameGuessInput> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  
+
   List<GameItem> _filteredSuggestions = [];
   bool _showSuggestions = false;
   Timer? _debounceTimer;
@@ -49,14 +49,16 @@ class _GameGuessInputState extends State<GameGuessInput> {
     final query = _textController.text.trim().toLowerCase();
 
     if (query.isEmpty) {
-      setState(() {
-        _filteredSuggestions = [];
-        _showSuggestions = false;
-      });
+      if (_showSuggestions || _filteredSuggestions.isNotEmpty) {
+        setState(() {
+          _filteredSuggestions = [];
+          _showSuggestions = false;
+        });
+      }
       return;
     }
 
-    // High performance search with early exit (stops as soon as 6 matches found)
+    // Arama debouncing & hızlı arama (Maksimum 6 öneri)
     _debounceTimer = Timer(const Duration(milliseconds: 60), () {
       final List<GameItem> results = [];
       final games = widget.games;
@@ -66,7 +68,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
         final game = games[i];
         if (game.name.toLowerCase().contains(query)) {
           results.add(game);
-          if (results.length >= 6) break; // Early termination for max speed
+          if (results.length >= 6) break;
         }
       }
 
@@ -81,7 +83,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
 
   void _onFocusChanged() {
     if (!_focusNode.hasFocus) {
-      Future.delayed(const Duration(milliseconds: 200), () {
+      Future.delayed(const Duration(milliseconds: 180), () {
         if (mounted && !_focusNode.hasFocus) {
           setState(() {
             _showSuggestions = false;
@@ -116,80 +118,90 @@ class _GameGuessInputState extends State<GameGuessInput> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Canlı Oyun Öneri Paneli (Klavyenin hemen üstünde)
-        if (_showSuggestions && _filteredSuggestions.isNotEmpty)
-          Container(
-            constraints: const BoxConstraints(maxHeight: 220),
-            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: SteamColors.cardBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: SteamColors.steamBlue, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                shrinkWrap: true,
-                itemCount: _filteredSuggestions.length,
-                separatorBuilder: (_, __) => const Divider(
-                  color: SteamColors.cardBorder,
-                  height: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final game = _filteredSuggestions[index];
-                  return ListTile(
-                  dense: true,
-                  leading: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: SteamColors.cardSurface,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Icon(
-                      Icons.videogame_asset_rounded,
-                      color: SteamColors.steamBlue,
-                      size: 18,
+        // 1. Sabit Slot: Canlı Oyun Öneri Paneli (AnimatedSize sayesinde TextField asla unmount olmaz)
+        AnimatedSize(
+          key: const ValueKey('game_guess_animated_size'),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          child: (_showSuggestions && _filteredSuggestions.isNotEmpty)
+              ? Container(
+                  key: const ValueKey('game_guess_suggestions_panel'),
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: SteamColors.cardBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: SteamColors.steamBlue, width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        blurRadius: 16,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ListView.separated(
+                      key: const ValueKey('suggestions_list_view'),
+                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      shrinkWrap: true,
+                      itemCount: _filteredSuggestions.length,
+                      separatorBuilder: (_, __) => const Divider(
+                        color: SteamColors.cardBorder,
+                        height: 1,
+                      ),
+                      itemBuilder: (context, index) {
+                        final game = _filteredSuggestions[index];
+                        return ListTile(
+                          dense: true,
+                          leading: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: SteamColors.cardSurface,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.videogame_asset_rounded,
+                              color: SteamColors.steamBlue,
+                              size: 18,
+                            ),
+                          ),
+                          title: Text(
+                            game.name,
+                            style: const TextStyle(
+                              color: SteamColors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          trailing: const Icon(
+                            Icons.north_west_rounded,
+                            color: SteamColors.textSecondary,
+                            size: 16,
+                          ),
+                          onTap: () {
+                            _textController.text = game.name;
+                            _textController.selection = TextSelection.fromPosition(
+                              TextPosition(offset: game.name.length),
+                            );
+                            setState(() {
+                              _showSuggestions = false;
+                              _filteredSuggestions = [];
+                            });
+                          },
+                        );
+                      },
                     ),
                   ),
-                  title: Text(
-                    game.name,
-                    style: const TextStyle(
-                      color: SteamColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  trailing: const Icon(
-                    Icons.north_west_rounded,
-                    color: SteamColors.textSecondary,
-                    size: 16,
-                  ),
-                  onTap: () {
-                    _textController.text = game.name;
-                    _textController.selection = TextSelection.fromPosition(
-                      TextPosition(offset: game.name.length),
-                    );
-                    setState(() {
-                      _showSuggestions = false;
-                      _filteredSuggestions = [];
-                    });
-                  },
-                );
-              },
-            ),
-          ),
+                )
+              : const SizedBox.shrink(key: ValueKey('empty_suggestions_slot')),
         ),
 
-        // Alt Giriş ve Tahmin Çubuğu
+        // 2. Sabit Slot: Alt Giriş ve Tahmin Çubuğu
         Container(
+          key: const ValueKey('game_guess_input_bar_container'),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: const BoxDecoration(
             color: SteamColors.navyBg,
@@ -201,6 +213,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
             children: [
               Expanded(
                 child: TextField(
+                  key: const ValueKey('game_guess_text_field'),
                   controller: _textController,
                   focusNode: _focusNode,
                   enabled: widget.isEnabled,

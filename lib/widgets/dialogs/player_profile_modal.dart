@@ -228,6 +228,7 @@ class PlayerProfileModal extends StatelessWidget {
                                 onPressed: () async {
                                   await authService.signOut();
                                   if (context.mounted) {
+                                    await context.read<GameProvider>().initializeForUser(null);
                                     Navigator.of(context).pushAndRemoveUntil(
                                       MaterialPageRoute(builder: (_) => const WelcomeAuthScreen()),
                                       (route) => false,
@@ -311,6 +312,7 @@ class PlayerProfileModal extends StatelessWidget {
                                     onPressed: () async {
                                       await authService.signOut();
                                       if (context.mounted) {
+                                        await context.read<GameProvider>().initializeForUser(null);
                                         Navigator.of(context).pushAndRemoveUntil(
                                           MaterialPageRoute(builder: (_) => const WelcomeAuthScreen()),
                                           (route) => false,

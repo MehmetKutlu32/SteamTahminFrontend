@@ -56,13 +56,33 @@ class GameGuessApp extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  late Future<void> _initFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFuture = _initAuth();
+  }
+
+  Future<void> _initAuth() async {
+    final authService = context.read<AuthService>();
+    final gameProvider = context.read<GameProvider>();
+    final user = await authService.loadSavedUser();
+    await gameProvider.initializeForUser(user);
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: context.read<AuthService>().loadSavedUser(),
+      future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(

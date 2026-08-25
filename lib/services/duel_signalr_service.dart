@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../models/game_review_dto.dart';

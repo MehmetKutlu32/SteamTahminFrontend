@@ -191,8 +191,46 @@ class LocalRoundCacheService {
     }
   }
 
-  /// Kalıcı profil verilerini diske yazar
-  static const String _keyProfileData = 'player_profile_v2';
+  /// Kalıcı profil verilerini diske yazar (Kullanıcıya özel izole anahtar)
+  static const String _keyLegacyProfileData = 'player_profile_v2';
+  static const String _keyGuestProfileData = 'player_profile_guest';
+
+  static String _getProfileKey(String? userId) {
+    if (userId != null && userId.trim().isNotEmpty) {
+      return 'player_profile_user_${userId.trim()}';
+    }
+    return _keyGuestProfileData;
+  }
+
+  /// Kullanıcının daha önce kaydedilmiş bir profili var mı?
+  static Future<bool> hasUserProfile(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(_getProfileKey(userId));
+  }
+
+  /// Ziyaretçi olarak anlamlı bir oyun ilerlemesi var mı?
+  static Future<bool> hasGuestProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_keyGuestProfileData);
+    if (jsonStr == null) return false;
+    try {
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final gamesPlayed = (data['totalChestsOpened'] ?? 0) + (data['totalTowerWins'] ?? 0);
+      final totalXp = data['totalXp'] ?? 0;
+      final coins = data['coins'] ?? 50;
+      return gamesPlayed > 0 || totalXp > 0 || coins > 50;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Ziyaretçi profilini sıfırlar
+  static Future<void> clearGuestProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyGuestProfileData);
+    } catch (_) {}
+  }
 
   static Future<void> saveProfileData({
     required int highScore,
@@ -213,9 +251,11 @@ class LocalRoundCacheService {
     List<String>? claimedAchievements,
     String? achievementProgressJson,
     int? timeAttackHighScore,
+    String? userId,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final key = _getProfileKey(userId);
       final data = {
         'highScore': highScore,
         'totalXp': totalXp,
@@ -236,17 +276,28 @@ class LocalRoundCacheService {
         'achievementProgressJson': achievementProgressJson,
         'timeAttackHighScore': timeAttackHighScore,
       };
-      await prefs.setString(_keyProfileData, jsonEncode(data));
+      await prefs.setString(key, jsonEncode(data));
     } catch (e) {
       debugPrint('Profile save error: $e');
     }
   }
 
-  /// Kalıcı profil verilerini diskten okur
-  static Future<Map<String, dynamic>> loadProfileData() async {
+  /// Kalıcı profil verilerini diskten okur (Kullanıcıya özel)
+  static Future<Map<String, dynamic>> loadProfileData({String? userId}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonStr = prefs.getString(_keyProfileData);
+      final key = _getProfileKey(userId);
+      var jsonStr = prefs.getString(key);
+
+      // Legacy migrasyonu (Eski tekil veriyi bu kullanıcıya aktar)
+      if (jsonStr == null && prefs.containsKey(_keyLegacyProfileData)) {
+        jsonStr = prefs.getString(_keyLegacyProfileData);
+        if (jsonStr != null) {
+          await prefs.setString(key, jsonStr);
+          await prefs.remove(_keyLegacyProfileData);
+        }
+      }
+
       if (jsonStr == null) return {};
       return jsonDecode(jsonStr) as Map<String, dynamic>;
     } catch (e) {

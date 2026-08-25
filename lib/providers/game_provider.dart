@@ -9,6 +9,7 @@ import '../models/quest_models.dart';
 import '../models/roguelike_models.dart';
 import '../models/round_model.dart';
 import '../models/shop_models.dart';
+import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/local_round_cache_service.dart';
 
@@ -42,6 +43,9 @@ class GameProvider extends ChangeNotifier {
       : _apiService = apiService ?? ApiService();
 
   // Currency & Player Profile (Tüm modlar arasında ortak kalıcı ilerleme)
+  String? _activeUserId;
+  String? get activeUserId => _activeUserId;
+
   int _coins = 50; // Başlangıç Altını
   int _diamonds = 2; // Başlangıç Elması
   int _totalWins = 0;
@@ -548,6 +552,7 @@ class GameProvider extends ChangeNotifier {
       claimedAchievements: _claimedAchievementIds.toList(),
       achievementProgressJson: _achievementProgress.isNotEmpty ? jsonEncode(_achievementProgress) : null,
       timeAttackHighScore: _timeAttackHighScore,
+      userId: _activeUserId,
     );
   }
 
@@ -778,8 +783,52 @@ class GameProvider extends ChangeNotifier {
 
   bool _isRefillingQueue = false;
 
-  Future<void> initializeGame() async {
-    final profile = await LocalRoundCacheService.loadProfileData();
+  /// Kullanıcı oturumuna göre profili yükler/değiştirir
+  Future<void> initializeForUser(UserModel? user) async {
+    final newUserId = user?.isGuest == false ? user?.id : null;
+    if (_activeUserId != newUserId) {
+      await _saveProfile();
+    }
+    _activeUserId = newUserId;
+    await initializeGame(userId: _activeUserId);
+  }
+
+  /// Ziyaretçi verilerini belirtilen Google kullanıcısına aktarır ve misafir profilini temizler
+  Future<void> migrateGuestToUser(String targetUserId) async {
+    final guestData = await LocalRoundCacheService.loadProfileData(userId: null);
+    if (guestData.isNotEmpty) {
+      await LocalRoundCacheService.saveProfileData(
+        highScore: guestData['highScore'] ?? 0,
+        totalXp: guestData['totalXp'] ?? 0,
+        unopenedChests: guestData['unopenedChests'] ?? 0,
+        coins: guestData['coins'] ?? 50,
+        diamonds: guestData['diamonds'] ?? 2,
+        totalTowerWins: guestData['totalTowerWins'] ?? 0,
+        bestStreak: guestData['bestStreak'] ?? 0,
+        totalChestsOpened: guestData['totalChestsOpened'] ?? 0,
+        discoveredPerks: (guestData['discoveredPerks'] as List<dynamic>?)?.cast<String>() ?? [],
+        purchasedShopItems: (guestData['purchasedShopItems'] as List<dynamic>?)?.cast<String>() ?? [],
+        equippedAvatar: guestData['equippedAvatar'] as String?,
+        equippedFrame: guestData['equippedFrame'] as String?,
+        equippedTitle: guestData['equippedTitle'] as String?,
+        dailyQuestsJson: guestData['dailyQuestsJson'] as String?,
+        dailyQuestsDate: guestData['dailyQuestsDate'] as String?,
+        claimedAchievements: (guestData['claimedAchievements'] as List<dynamic>?)?.cast<String>() ?? [],
+        achievementProgressJson: guestData['achievementProgressJson'] as String?,
+        timeAttackHighScore: guestData['timeAttackHighScore'] as int?,
+        userId: targetUserId,
+      );
+      await LocalRoundCacheService.clearGuestProfile();
+    }
+    _activeUserId = targetUserId;
+    await initializeGame(userId: targetUserId);
+  }
+
+  Future<void> initializeGame({String? userId}) async {
+    if (userId != null) {
+      _activeUserId = userId;
+    }
+    final profile = await LocalRoundCacheService.loadProfileData(userId: _activeUserId);
     _highScore = profile['highScore'] ?? 0;
     _totalXp = profile['totalXp'] ?? 0;
     _unopenedChests = profile['unopenedChests'] ?? 0;
@@ -802,10 +851,10 @@ class GameProvider extends ChangeNotifier {
     _claimedAchievementIds.clear();
     _claimedAchievementIds.addAll(savedClaimed);
 
+    _achievementProgress.clear();
     if (profile['achievementProgressJson'] != null) {
       try {
         final Map<String, dynamic> decoded = jsonDecode(profile['achievementProgressJson']);
-        _achievementProgress.clear();
         decoded.forEach((key, val) {
           if (val is int) _achievementProgress[key] = val;
         });
@@ -815,6 +864,8 @@ class GameProvider extends ChangeNotifier {
     _dailyQuestsDateStr = profile['dailyQuestsDate'] as String? ?? '';
     if (profile['dailyQuestsJson'] != null) {
       _dailyQuests = DailyQuestCatalog.deserializeQuests(profile['dailyQuestsJson']);
+    } else {
+      _dailyQuests = [];
     }
     checkDailyQuestsReset();
 
