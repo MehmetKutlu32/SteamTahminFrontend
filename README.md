@@ -1,4 +1,4 @@
-# 🎮 Steam Tahmin Oyunu (Frontend)
+# 🎮 Steam Guessr (Frontend)
 
 <div align="center">
 
@@ -6,130 +6,152 @@
 ![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![SignalR](https://img.shields.io/badge/SignalR-Realtime-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
 ![Shorebird](https://img.shields.io/badge/Shorebird-CodePush%20Enabled-1DB954?style=for-the-badge&logo=target&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
 
 <p align="center">
-  <b>Steam incelemelerini okuyup doğru oyunu tahmin etmeye dayalı, roguelike mekanikler ve gerçek zamanlı çok oyunculu (SignalR) düello modları içeren yeni nesil mobil tahmin oyunu.</b>
+  <b>A next-generation mobile game built with Flutter where players guess Steam games based on real user reviews, featuring roguelike progression, time attack, and real-time multiplayer duels via SignalR.</b>
 </p>
 
 </div>
 
 ---
 
-## 🌟 Öne Çıkan Özellikler
+## 🌟 Key Features
 
-### 🕹️ Oyun Modları
-- **🗼 Roguelike Kule Modu (Tower Run):** 
-  - 10 katlı aşamalı kule tırmanışı.
-  - Her katta rastgele açılan Steam incelemeleri, ipucu jokerleri ve can sistemi.
-  - Kat sonlarında gizemli sandıklar, pasif relikler (kalıntılar) ve perk seçimleri.
-- **⚡ Zamana Karşı (Time Attack):** 
-  - Kısıtlı sürede en fazla doğru tahmini yaparak en yüksek skora ve seriye ulaşma yarışı.
-- **⚔️ Çevrimiçi Düello (Realtime Multiplayer Duel):** 
-  - **ASP.NET Core SignalR** altyapısıyla sıfır gecikmeli 1v1 canlı eşleşme.
-  - Canlı skor tablosu, tur sonuçları, teslim olma ve oda kurma mekanikleri.
-- **👥 Yerel 2 Kişilik Mod:** 
-  - Tek cihaz üzerinden arkadaşınızla sıra tabanlı kapışma.
+### 🕹️ Game Modes
+- **🗼 Roguelike Tower Run:** 
+  - Climb through a 10-floor dynamic challenge.
+  - Unlock user reviews progressively, utilize life-saving jokers, and manage health points.
+  - Open mystery chests, discover passive relics, and select strategic perks between floors.
+- **⚡ Time Attack:** 
+  - Race against the clock to make as many correct guesses as possible to achieve high score streaks.
+- **⚔️ Real-Time Online Duel:** 
+  - Ultra-low latency 1v1 live multiplayer powered by **ASP.NET Core SignalR**.
+  - Live synchronized scoreboard, round transitions, forfeit mechanism, and lobby room matchmaking.
+- **👥 Local 2-Player Mode:** 
+  - Turn-based pass-and-play gameplay on a single device.
 
-### 💎 Ekonomi ve İlerleme Sistemi
-- **🪙 Altın & 💎 Elmas Ekonomisi:** Turlardan, günlük görevlerden ve başarılardan kazanılan bakiye.
-- **🃏 Jokerler & Yetenekler:**
-  - 🔤 Harf Açma (Vowel Reveal)
-  - 🛡️ Koruma Kalkanı (Guardian Shield)
-  - 🏷️ Tür Radarı (Genre Radar)
-  - 💬 Ekstra İnceleme Satın Alma
-- **📜 Günlük Görevler & Başarım Ağacı:** Sürekli güncellenen ödül sistemi.
-- **🛍️ Mağaza & Kişiselleştirme:** Özel avatarlar, unvanlar ve profil çerçeveleri.
+### 💎 Economy & Progression System
+- **🪙 Gold & 💎 Diamonds Economy:** Earn currency from completed runs, daily quests, and achievements.
+- **🃏 Jokers & Power-ups:**
+  - 🔤 Vowel Reveal (*Uncovers vowels in the title*)
+  - 🛡️ Guardian Shield (*Protects against the next incorrect guess*)
+  - 🏷️ Genre Radar (*Reveals official Steam tags and genres*)
+  - 💬 Extra Review (*Purchases additional clues*)
+- **📜 Daily Quests & Achievement Tree:** Rewarding daily active player milestones.
+- **🛍️ Customization Shop:** Collect unique avatars, player titles, and neon profile borders.
 
-### 🚀 Canlı Kod Güncelleme (Shorebird Code Push)
-- **Sıfır APK İndirme:** Dart/Arayüz güncellemeleri kullanıcıya yeni APK indirtmeden buluttan (OTA) sessizce uygulanır.
+### 🚀 Over-The-Air Updates (Shorebird Code Push)
+- **Zero APK Reinstallations:** Instant cloud patch deployments (OTA) for UI and game logic updates without forcing users to download new APKs.
 
 ---
 
-## 🛠️ Teknoloji Yığını & Mimari
+## 🛠️ Architecture & Tech Stack
 
-| Katman | Teknoloji | Açıklama |
+| Layer | Technology | Details |
 | :--- | :--- | :--- |
-| **Framework** | Flutter 3.x / Dart | Çapraz platform mobil arayüz |
-| **Durum Yönetimi** | Provider | Reaktif UI state & Session yönetimi |
-| **Gerçek Zamanlı Ağ** | SignalR Client | Online 1v1 WebSocket tabanlı düellolar |
-| **HTTP İstemcisi** | `http` & `io_client` | REST API tüketimi ve otomatik yeniden deneme |
-| **OTA Güncelleme** | Shorebird | Anında buluttan yama dağıtımı |
-| **Yerel Depolama** | SharedPreferences | Profil, ayarlar ve önbellek yönetimi |
-| **Tasarım Dili** | Özel Steam Dark Theme | Glassmorphism, neon Steam renk paleti & modern animasyonlar |
+| **Framework** | Flutter 3.x / Dart | Cross-platform mobile client |
+| **State Management** | Provider | Reactive state management & session controllers |
+| **Real-time Networking** | SignalR Client | WebSocket-based 1v1 multiplayer duels |
+| **HTTP Client** | `http` & `io_client` | Robust REST API consumer with auto-retry logic |
+| **Code Push / OTA** | Shorebird | Cloud-based background patch updater |
+| **Local Persistence** | SharedPreferences | Local offline round caching, user progression & settings |
+| **UI / UX Design** | Custom Steam Dark Theme | Glassmorphism, cyber-steam neon palette & micro-animations |
 
 ---
 
-## 📂 Proje Dizin Yapısı
+## 📂 Project Structure
 
 ```bash
 lib/
-├── models/             # Veri modelleri (GameItem, Round, Relic, Quest, User vb.)
-├── providers/          # Global durum yöneticisi (GameProvider, SessionProvider)
-├── screens/            # Ana ekranlar
-│   ├── auth/           # Giriş & Misafir oturum ekranları
-│   ├── duel/           # Online ve yerel SignalR düello ekranları
-│   ├── game/           # Oyun turları, yardımcı diyaloglar
-│   ├── time_attack/    # Zamana karşı mod ekranı
-│   └── main_menu_screen.dart # Ana menü
-├── services/           # Servis katmanı
-│   ├── api_service.dart          # REST API istemcisi
-│   ├── auth_service.dart         # Google / Misafir kimlik doğrulama
-│   ├── duel_signalr_service.dart # Canlı SignalR Hub yöneticisi
-│   └── local_round_cache_service.dart # Çevrimdışı ve yerel profil önbelleği
-├── theme/              # Steam renk paleti ve tipografi tanımları
-├── utils/              # Küfür filtresi, yardımcı fonksiyonlar
-└── widgets/            # Yeniden kullanılabilir UI bileşenleri (Kartlar, Jokerler, Modallar)
+├── models/             # Data models (GameItem, Round, Relic, Quest, User, etc.)
+├── providers/          # Global state management (GameProvider, SessionProvider)
+├── screens/            # Application views & game screens
+│   ├── auth/           # Login & Guest authentication screens
+│   ├── duel/           # Online & Local SignalR duel screens
+│   ├── game/           # Core gameplay, round controllers, dialogs
+│   ├── time_attack/    # Time attack mode screen
+│   └── main_menu_screen.dart # Main navigation hub
+├── services/           # Network and storage service abstractions
+│   ├── api_service.dart          # Production REST API client
+│   ├── auth_service.dart         # Google & Guest session management
+│   ├── duel_signalr_service.dart # Real-time SignalR Hub manager
+│   └── local_round_cache_service.dart # Offline cache & persistent player profiles
+├── theme/              # Steam color palette & typography tokens
+├── utils/              # Text utilities, profanity filtering
+└── widgets/            # Reusable UI components (Cards, Jokers, Modals)
 ```
 
 ---
 
-## 🚀 Başlangıç ve Kurulum
+## 🚀 Getting Started
 
-### Gereksinimler
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.24+ önerilir)
-- [Shorebird CLI](https://docs.shorebird.dev) *(İsteğe bağlı - Code Push için)*
+### Prerequisites
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.24+ recommended)
+- [Shorebird CLI](https://docs.shorebird.dev) *(Optional - for code push releases)*
 - Android Studio / VS Code
 
-### 1. Depoyu Klonlayın
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/MehmetKutlu32/SteamTahminFrontend.git
 cd SteamTahminFrontend
 ```
 
-### 2. Bağımlılıkları Yükleyin
+### 2. Install Dependencies
 ```bash
 flutter pub get
 ```
 
-### 3. Uygulamayı Çalıştırın
+### 3. Run the App
 ```bash
-# Debug modunda başlat
+# Run in debug mode
 flutter run
 ```
 
 ---
 
-## 🔄 Shorebird ile Yayınlama ve Güncelleme
+## 🔄 Building & Updating with Shorebird
 
-### İlk Release Sürümünü Oluşturma:
+### Build Release Artifact:
 ```powershell
 shorebird release android
 ```
 
-### APK Dağıtmadan Anında Canlı Güncelleme (Patch) Gönderme:
+### Deploy Instant Over-The-Air Patch:
 ```powershell
 shorebird patch android
 ```
 
 ---
 
-## 👨‍💻 Geliştirici
+## 👨‍💻 Author
 
-- **Mehmet Kutlu** - [GitHub Profilim](https://github.com/MehmetKutlu32)
+- **Mehmet Kutlu** - [GitHub Profile](https://github.com/MehmetKutlu32)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+```text
+MIT License
+
+Copyright (c) 2026 Mehmet Kutlu
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+```
 
 ---
 
 <div align="center">
-  <sub>Steam® Valve Corporation'ın tescilli ticari markasıdır. Bu proje kâr amacı gütmeyen açık kaynaklı bir topluluk oyunudur.</sub>
+  <sub>Steam® is a registered trademark of Valve Corporation. This project is an open-source, non-profit community trivia game.</sub>
 </div>
