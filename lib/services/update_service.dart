@@ -26,10 +26,8 @@ class UpdateService extends ChangeNotifier {
   int? get currentPatch => _currentPatch;
 
   String get displayVersion {
-    if (_currentPatch != null && _currentPatch! > 0) {
-      return 'v1.0.${4 + _currentPatch!}';
-    }
-    return appVersion;
+    final patchNumber = _currentPatch ?? 0;
+    return '$appVersion.$patchNumber';
   }
 
   String? _statusMessage;
