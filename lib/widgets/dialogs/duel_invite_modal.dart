@@ -37,12 +37,12 @@ class _DuelInviteModalState extends State<DuelInviteModal> {
 
   String _getInviteText(String hostName) {
     return '⚔️ $hostName seni Steam Tahmin 1v1 Düellosuna davet ediyor!\n\n'
-        '🔑 ODA KODU: ${widget.roomCode}\n\n'
-        '🎮 Nasıl Katılınır?\n'
-        '1. Oyunu aç ve ana menüden "1v1 Düello" sekmesine geç.\n'
+        '🎮 Doğrudan Maça Katıl:\n'
+        '👉 https://mehmetkutlu32.github.io/SteamTahminFrontend?room=${widget.roomCode}\n\n'
+        '🔑 VEYA ODA KODU İLE GİR:\n'
+        '1. Oyunu aç ve "1v1 Düello" sekmesine geç.\n'
         '2. "Online 1v1 Düello" seçeneğine bas ve "${widget.roomCode}" kodunu gir.\n'
-        '3. Steam incelemelerinden oyunu ilk tahmin eden maçı kazansın!\n\n'
-        '📲 Oyunu İndir: https://github.com/MehmetKutlu32/SteamTahminFrontend';
+        '3. Steam incelemelerinden oyunu ilk tahmin eden maçı kazansın!';
   }
 
   Future<void> _shareInvite(String hostName) async {

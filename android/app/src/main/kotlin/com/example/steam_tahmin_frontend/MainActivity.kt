@@ -14,12 +14,34 @@ import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.steam_tahmin_frontend/gallery"
+    private var channel: MethodChannel? = null
+    private var initialDeepLink: String? = null
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        initialDeepLink = intent?.dataString
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val deepLink = intent.dataString
+        if (deepLink != null) {
+            channel?.invokeMethod("onDeepLink", deepLink)
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "saveImageToGallery") {
+        val ch = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        channel = ch
+
+        ch.setMethodCallHandler { call, result ->
+            if (call.method == "getInitialLink") {
+                result.success(initialDeepLink)
+                initialDeepLink = null
+            } else if (call.method == "saveImageToGallery") {
                 val bytes = call.argument<ByteArray>("imageBytes")
                 val title = call.argument<String>("title") ?: "steam_tahmin_${System.currentTimeMillis()}"
 

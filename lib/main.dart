@@ -8,6 +8,7 @@ import 'screens/auth/welcome_auth_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'services/deep_link_service.dart';
 import 'services/update_service.dart';
 import 'theme/steam_theme.dart';
 
@@ -24,6 +25,7 @@ void main() {
   if (!kIsWeb) {
     HttpOverrides.global = DevHttpOverrides();
   }
+  DeepLinkService.init();
   runApp(const GameGuessApp());
 }
 
@@ -51,6 +53,7 @@ class GameGuessApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: DeepLinkService.navigatorKey,
         title: 'İncelemelerden Oyunu Tahmin Et',
         debugShowCheckedModeBanner: false,
         theme: SteamTheme.darkTheme,

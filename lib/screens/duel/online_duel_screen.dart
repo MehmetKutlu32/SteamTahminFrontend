@@ -18,7 +18,9 @@ import 'widgets/duel_waiting_room_widget.dart';
 enum OnlineDuelPhase { lobby, waitingOpponent, playing, roundResult, gameOver }
 
 class OnlineDuelScreen extends StatefulWidget {
-  const OnlineDuelScreen({super.key});
+  final String? initialRoomCode;
+
+  const OnlineDuelScreen({super.key, this.initialRoomCode});
 
   @override
   State<OnlineDuelScreen> createState() => _OnlineDuelScreenState();
@@ -68,6 +70,9 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
   void initState() {
     super.initState();
     _nameController.text = 'Oyuncu_${DateTime.now().millisecond}';
+    if (widget.initialRoomCode != null && widget.initialRoomCode!.isNotEmpty) {
+      _roomCodeController.text = widget.initialRoomCode!;
+    }
   }
 
   @override
@@ -86,6 +91,14 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
 
       final provider = context.read<GameProvider>();
       if (provider.gamesList.isEmpty) provider.initializeGame();
+
+      if (widget.initialRoomCode != null && widget.initialRoomCode!.isNotEmpty) {
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted && _phase == OnlineDuelPhase.lobby) {
+            _joinRoom();
+          }
+        });
+      }
     }
   }
 
