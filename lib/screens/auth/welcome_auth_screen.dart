@@ -114,24 +114,8 @@ class _WelcomeAuthScreenState extends State<WelcomeAuthScreen> {
     try {
       final user = await authService.signInWithGoogle();
       if (user != null && mounted) {
-        final hasExistingProfile = await LocalRoundCacheService.hasUserProfile(user.id);
-        final hasGuest = await LocalRoundCacheService.hasGuestProgress();
-
-        // Yalnızca kullanıcı YENİ ise ve gerçekte cihazda ZİYARETÇİ ilerlemesi varsa sor
-        if (!hasExistingProfile && hasGuest) {
-          final guestData = await LocalRoundCacheService.loadProfileData(userId: null);
-          if (mounted) {
-            final shouldMigrate = await _showMigrationDialog(context, guestData);
-            if (shouldMigrate == true) {
-              await gameProvider.migrateGuestToUser(user.id);
-            } else {
-              await gameProvider.initializeForUser(user);
-            }
-          }
-        } else {
-          // Mevcut Google kullanıcısı doğrudan kendi profilini yükler
-          await gameProvider.initializeForUser(user);
-        }
+        // Misafir ve Google hesapları %100 birbirinden bağımsızdır (asla birbirine yazmaz veya aktarmaz)
+        await gameProvider.initializeForUser(user);
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
@@ -151,91 +135,6 @@ class _WelcomeAuthScreenState extends State<WelcomeAuthScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  Future<bool?> _showMigrationDialog(BuildContext context, Map<String, dynamic> guestData) {
-    final level = 1 + ((guestData['totalXp'] as int? ?? 0) ~/ 100);
-    final coins = guestData['coins'] as int? ?? 50;
-    final diamonds = guestData['diamonds'] as int? ?? 2;
-    final wins = guestData['totalTowerWins'] as int? ?? 0;
-
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF131D29),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Colors.amberAccent, width: 1.2),
-        ),
-        title: const Row(
-          children: [
-            Text('🔄 ', style: TextStyle(fontSize: 22)),
-            Text(
-              'İlerlemeyi Google\'a Aktar',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Cihazda kayıtlı ziyaretçi (misafir) ilerlemeniz bulundu:',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: SteamColors.cardBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Column(
-                children: [
-                  _buildStatRow('🎯 Seviye:', 'Lv.$level', Colors.amberAccent),
-                  const SizedBox(height: 4),
-                  _buildStatRow('🪙 Bakiye:', '$coins Altın • $diamonds Elmas', Colors.cyanAccent),
-                  const SizedBox(height: 4),
-                  _buildStatRow('🏆 Galibiyet:', '$wins Oyun', Colors.greenAccent),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Bu veriler yeni Google hesabınıza bağlansın mı?',
-              style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Sıfırdan Başla', style: TextStyle(color: Colors.white54, fontSize: 12)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amberAccent,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Aktar & Birleştir ✨', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatRow(String label, String val, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
-        Text(val, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.bold)),
-      ],
-    );
   }
 
   Future<void> _handleGuestSignIn(BuildContext context) async {
