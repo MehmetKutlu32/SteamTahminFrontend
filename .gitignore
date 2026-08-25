@@ -50,3 +50,7 @@ app.*.map.json
 key.properties
 .env
 .env.*
+
+# Binaries
+*.apk
+*.aab
