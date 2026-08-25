@@ -514,6 +514,27 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> debugResetProfileToFactoryDefault() async {
+    _coins = 50;
+    _diamonds = 2;
+    _unopenedChests = 0;
+    _totalXp = 0;
+    _highScore = 0;
+    _totalTowerWins = 0;
+    _bestStreak = 0;
+    _totalChestsOpened = 0;
+    _timeAttackHighScore = 0;
+    _discoveredPerkIds.clear();
+    _purchasedShopItemIds.clear();
+    _claimedAchievementIds.clear();
+    _achievementProgress.clear();
+    _equippedAvatarId = null;
+    _equippedFrameId = null;
+    _equippedTitleId = null;
+    await _saveProfile();
+    notifyListeners();
+  }
+
   Future<void> debugFillAllCaches() async {
     for (final mode in GameMode.values) {
       final current = await LocalRoundCacheService.getCachedRoundCount(mode);
