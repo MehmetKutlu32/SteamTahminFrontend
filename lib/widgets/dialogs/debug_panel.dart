@@ -215,6 +215,16 @@ class DebugPanelModal {
                           _buildActionBtn('+10 💎 Elmas', SteamColors.steamCyan, () => provider.debugSetDiamonds(provider.diamonds + 10)),
                           _buildActionBtn('+5 🎡 Çark Hakkı', Colors.purpleAccent, () => provider.debugSetChests(provider.unopenedChests + 5)),
                           _buildActionBtn('+1000 XP 🎖️', Colors.tealAccent, () => provider.addDebugXp(xp: 1000)),
+                          _buildActionBtn('🔄 Varsayılan (50🪙 2💎)', Colors.orangeAccent, () {
+                            provider.debugSetCoins(50);
+                            provider.debugSetDiamonds(2);
+                            provider.debugSetChests(0);
+                          }),
+                          _buildActionBtn('🧹 Sıfırla (0🪙 0💎)', Colors.redAccent, () {
+                            provider.debugSetCoins(0);
+                            provider.debugSetDiamonds(0);
+                            provider.debugSetChests(0);
+                          }),
                           _buildActionBtn('Küfür Sansürü Aç/Kapat', Colors.white70, () => provider.toggleCensorProfanity(!provider.censorProfanity)),
                         ],
                       ),

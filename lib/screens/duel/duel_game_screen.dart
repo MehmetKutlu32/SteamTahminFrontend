@@ -219,7 +219,7 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
         title: const Row(
           children: [
             Text('🏳️ ', style: TextStyle(fontSize: 20)),
-            Text('Pes Et / Maçı Bitir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Pes Et / Maç Seçenekleri', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
         content: Column(
@@ -227,15 +227,36 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sıra $currentSurrendererName\'de. Maçı nasıl sonlandırmak istersiniz?',
+              'Sıra $currentSurrendererName\'de. Ne yapmak istiyorsunuz?',
               style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 14),
+
+            // 1. SADECE BU RAUNDU RAKİBE VER (Sonraki Raund)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.skip_next_rounded, color: Colors.black, size: 18),
+              label: Text(
+                '⏭️ Bu Raundu Rakibe Ver (+1 Puan $opponentName\'e)',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 11),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amberAccent,
+                minimumSize: const Size.fromHeight(40),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _forfeitCurrentRound(currentSurrenderer);
+              },
+            ),
+            const SizedBox(height: 8),
+
+            // 2. TÜM MAÇI HÜKMEN KAYBET
             ElevatedButton.icon(
               icon: const Icon(Icons.flag_rounded, color: Colors.white, size: 16),
               label: Text(
-                '$currentSurrendererName Pes Etsin ($opponentName Kazansın)',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11.5),
+                '🏳️ Tüm Maçtan Çekil ($opponentName Maçı Kazansın)',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
@@ -248,20 +269,23 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
               },
             ),
             const SizedBox(height: 8),
+
+            // 3. DOSTÇA BERABERLİK (2 Taraf da Onaylamalı)
             ElevatedButton.icon(
-              icon: const Icon(Icons.handshake_rounded, color: Colors.black, size: 16),
+              icon: const Icon(Icons.handshake_rounded, color: Colors.white, size: 16),
               label: const Text(
-                '🤝 Dostça / Berabere Bitir (İki Taraf Razı)',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 11.5),
+                '🤝 Dostça Beraberlik (İki Tarafın Onayıyla)',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amberAccent,
+                backgroundColor: const Color(0xFF2E3A4B),
+                side: const BorderSide(color: Colors.cyanAccent, width: 1),
                 minimumSize: const Size.fromHeight(40),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () {
                 Navigator.of(ctx).pop();
-                _endMatchAsDraw();
+                _showMutualDrawConfirmationDialog();
               },
             ),
           ],
@@ -272,6 +296,147 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
             child: const Text('Vazgeç (Devam Et)', style: TextStyle(color: Colors.white54)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _forfeitCurrentRound(int forfeiterPlayer) {
+    _stopTurnTimer();
+    final provider = context.read<GameProvider>();
+    final winningPlayer = forfeiterPlayer == 1 ? 2 : 1;
+    final winnerName = winningPlayer == 1 ? _p1Name : _p2Name;
+    final forfeiterName = forfeiterPlayer == 1 ? _p1Name : _p2Name;
+
+    setState(() {
+      if (winningPlayer == 1) {
+        _player1Score += 1;
+      } else {
+        _player2Score += 1;
+      }
+      _roundResultMessage = '🏳️ $forfeiterName bu raundu geçti. (+1 Puan $winnerName)';
+    });
+
+    if (_isMatchOver) {
+      provider.recordDuelWin(winningPlayer);
+    }
+  }
+
+  void _showMutualDrawConfirmationDialog() {
+    bool p1Confirmed = false;
+    bool p2Confirmed = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF131D29),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Colors.cyanAccent),
+            ),
+            title: const Row(
+              children: [
+                Text('🤝 ', style: TextStyle(fontSize: 22)),
+                Expanded(
+                  child: Text(
+                    'Dostça Beraberlik Onayı',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Maçın berabere bitmesi için her iki oyuncunun da kendi butonuna basarak onaylaması gerekmektedir.',
+                  style: TextStyle(color: Colors.white70, fontSize: 12.5),
+                ),
+                const SizedBox(height: 16),
+                // P1 Onay
+                ElevatedButton.icon(
+                  icon: Icon(
+                    p1Confirmed ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                    color: p1Confirmed ? Colors.black : Colors.cyanAccent,
+                    size: 18,
+                  ),
+                  label: Text(
+                    p1Confirmed ? '✓ $_p1Name Onayladı' : '$_p1Name: [ Onayla ]',
+                    style: TextStyle(
+                      color: p1Confirmed ? Colors.black : Colors.cyanAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: p1Confirmed ? Colors.cyanAccent : Colors.white10,
+                    minimumSize: const Size.fromHeight(40),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () {
+                    setDialogState(() {
+                      p1Confirmed = !p1Confirmed;
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                // P2 Onay
+                ElevatedButton.icon(
+                  icon: Icon(
+                    p2Confirmed ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                    color: p2Confirmed ? Colors.black : Colors.orangeAccent,
+                    size: 18,
+                  ),
+                  label: Text(
+                    p2Confirmed ? '✓ $_p2Name Onayladı' : '$_p2Name: [ Onayla ]',
+                    style: TextStyle(
+                      color: p2Confirmed ? Colors.black : Colors.orangeAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: p2Confirmed ? Colors.orangeAccent : Colors.white10,
+                    minimumSize: const Size.fromHeight(40),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () {
+                    setDialogState(() {
+                      p2Confirmed = !p2Confirmed;
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                // Nihai Bitir Butonu
+                ElevatedButton(
+                  onPressed: (p1Confirmed && p2Confirmed)
+                      ? () {
+                          Navigator.of(ctx).pop();
+                          _endMatchAsDraw();
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent,
+                    foregroundColor: Colors.black,
+                    disabledBackgroundColor: Colors.white12,
+                    disabledForegroundColor: Colors.white30,
+                    minimumSize: const Size.fromHeight(42),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text(
+                    (p1Confirmed && p2Confirmed) ? '🏁 Maçı Dostça Bitir' : 'İki Tarafın Onayı Bekleniyor...',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('İptal', style: TextStyle(color: Colors.white54)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -346,6 +511,8 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
               setState(() {
                 _player1Score = 0;
                 _player2Score = 0;
+                _isForcedDraw = false;
+                _roundResultMessage = null;
               });
               _startNewDuelRound();
             },
@@ -396,12 +563,14 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
                     setState(() {
                       _player1Score = 0;
                       _player2Score = 0;
+                      _isForcedDraw = false;
+                      _roundResultMessage = null;
                     });
                     _startNewDuelRound();
                   },
                   onChangePlayers: () => _openSettingsModal(),
                 )
-              else if (_roundResultMessage != null && _roundResultMessage!.contains('Doğru'))
+              else if (_roundResultMessage != null && (_roundResultMessage!.contains('Doğru') || _roundResultMessage!.contains('geçti')))
                 ElevatedButton(
                   onPressed: _startNewDuelRound,
                   style: ElevatedButton.styleFrom(
