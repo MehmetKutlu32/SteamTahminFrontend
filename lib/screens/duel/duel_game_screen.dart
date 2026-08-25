@@ -202,8 +202,10 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<GameProvider>();
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: SteamColors.darkBg,
       appBar: AppBar(
         backgroundColor: const Color(0xFF101822),
@@ -245,10 +247,10 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Column(
             children: [
-              // 1. Skor Tablosu & Sıra Banner'ı (Süre Sayacı Dahil)
+              // 1. Skor Tablosu & Sıra Banner'ı (Klavye açıkken tek satır kompakt)
               LocalDuelHeader(
                 player1Name: _p1Name,
                 player1Score: _player1Score,
@@ -259,8 +261,10 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
                 remainingTurnSeconds: _remainingTurnSeconds,
                 turnTimeLimit: _turnTimeLimit,
                 isMatchOver: _isMatchOver,
+                isCompact: isKeyboardOpen,
+                onPassTurn: (!_isMatchOver && !provider.isLoadingRound) ? _onPassTurn : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // 2. İncelemeler Listesi
               Expanded(
@@ -270,9 +274,9 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
                   roundResultMessage: _roundResultMessage,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
-              // 3. Maç Sonu Kartı / Sıradaki Raund / Tahmin Girişi & Pas Geç
+              // 3. Maç Sonu Kartı / Sıradaki Raund / %100 Ferah Tahmin Girişi
               if (_isMatchOver)
                 LocalDuelVictoryCard(
                   player1Name: _p1Name,
@@ -301,64 +305,10 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
                   child: const Text('Sıradaki Raund ➡️', style: TextStyle(fontWeight: FontWeight.bold)),
                 )
               else
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Pas Geç & Sıra Bilgisi Üst Çubuğu
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6, left: 4, right: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Text('🎯 ', style: TextStyle(fontSize: 14)),
-                              Text(
-                                'Sıra: ${_currentTurnPlayer == 1 ? _p1Name : _p2Name}',
-                                style: const TextStyle(
-                                  color: Colors.amberAccent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          InkWell(
-                            onTap: (!_isMatchOver && !provider.isLoadingRound) ? _onPassTurn : null,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1E293B),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.white24),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Text('⏭️ ', style: TextStyle(fontSize: 12)),
-                                  Text(
-                                    'Pas Geç (İpucu Aç)',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // %100 Tam Genişlikte Ferah Tahmin Giriş Çubuğu
-                    GameGuessInput(
-                      games: provider.gamesList,
-                      isEnabled: !_isMatchOver && !provider.isLoadingRound,
-                      onSubmitted: (guess) => _submitDuelGuess(provider, guess),
-                    ),
-                  ],
+                GameGuessInput(
+                  games: provider.gamesList,
+                  isEnabled: !_isMatchOver && !provider.isLoadingRound,
+                  onSubmitted: (guess) => _submitDuelGuess(provider, guess),
                 ),
             ],
           ),

@@ -8,6 +8,7 @@ import 'screens/auth/welcome_auth_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'services/update_service.dart';
 import 'theme/steam_theme.dart';
 
 class DevHttpOverrides extends HttpOverrides {
@@ -44,6 +45,9 @@ class GameGuessApp extends StatelessWidget {
           create: (context) => GameProvider(
             apiService: context.read<ApiService>(),
           ),
+        ),
+        ChangeNotifierProvider<UpdateService>(
+          create: (_) => UpdateService(),
         ),
       ],
       child: MaterialApp(

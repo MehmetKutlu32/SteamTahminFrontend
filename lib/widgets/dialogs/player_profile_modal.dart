@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../screens/auth/welcome_auth_screen.dart';
 import '../../services/auth_service.dart';
+import '../../services/update_service.dart';
 import '../../theme/steam_theme.dart';
 import 'shop_modal.dart';
 
@@ -445,6 +446,67 @@ class PlayerProfileModal extends StatelessWidget {
               const SizedBox(height: 14),
 
               // Butonlar (Dükkan & Kapat)
+              // Shorebird Canlı Güncelleme Durumu
+              Consumer<UpdateService>(
+                builder: (context, updateService, _) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF101924),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: updateService.isUpdateReady ? Colors.greenAccent : Colors.white12,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          updateService.isDownloading
+                              ? Icons.downloading_rounded
+                              : (updateService.isUpdateReady ? Icons.check_circle_rounded : Icons.system_update_rounded),
+                          size: 18,
+                          color: updateService.isUpdateReady ? Colors.greenAccent : SteamColors.steamCyan,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            updateService.statusMessage ?? (updateService.currentPatch != null ? 'Yama #${updateService.currentPatch} Aktif' : 'En güncel sürümdesiniz'),
+                            style: TextStyle(
+                              color: updateService.isUpdateReady ? Colors.greenAccent : Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (updateService.isChecking)
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.amberAccent),
+                          )
+                        else
+                          InkWell(
+                            onTap: updateService.isDownloading ? null : () => updateService.checkForUpdates(),
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white10,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'Denetle',
+                                style: TextStyle(color: Colors.amberAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+
               Row(
                 children: [
                   Expanded(

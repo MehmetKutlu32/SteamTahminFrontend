@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/roguelike_models.dart';
 import '../providers/game_provider.dart';
+import '../services/update_service.dart';
 import '../theme/steam_theme.dart';
 import '../widgets/branding/app_logo_widget.dart';
 import '../widgets/dialogs/achievements_modal.dart';
@@ -49,11 +50,76 @@ class _MainMenuScreenState extends State<MainMenuScreen> with SingleTickerProvid
     final claimableQuests = provider.claimableDailyQuestsCount;
     final claimableAchievements = provider.claimableAchievementsCount;
 
+    final updateService = context.watch<UpdateService>();
+
     return Scaffold(
       backgroundColor: SteamColors.darkBg,
       body: SafeArea(
         child: Column(
           children: [
+            // 🌟 CANLI GÜNCELLEME BİLDİRİMİ ŞERİDİ
+            if (updateService.isDownloading)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF153350), Color(0xFF0F2236)],
+                  ),
+                  border: Border(bottom: BorderSide(color: SteamColors.steamCyan, width: 1)),
+                ),
+                child: const Row(
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: SteamColors.steamCyan),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '🔄 Yeni oyun güncellemesi indiriliyor...',
+                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (updateService.isUpdateReady)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF133824), Color(0xFF0D2518)],
+                  ),
+                  border: const Border(bottom: BorderSide(color: Colors.greenAccent, width: 1.2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withValues(alpha: 0.2),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Text('✨ ', style: TextStyle(fontSize: 16)),
+                    const Expanded(
+                      child: Text(
+                        'Yeni güncelleme yüklendi! Uygulamayı kapatıp açarak yenilikleri kullanabilirsiniz.',
+                        style: TextStyle(color: Colors.greenAccent, fontSize: 11.5, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 16, color: Colors.white60),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => updateService.dismissUpdateBanner(),
+                    ),
+                  ],
+                ),
+              ),
+
             // 1. Üst Header (Cüzdan, Profil & Butonlar)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

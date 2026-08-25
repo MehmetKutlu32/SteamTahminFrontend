@@ -205,6 +205,9 @@ class _GameGuessInputState extends State<GameGuessInput> {
 
   @override
   Widget build(BuildContext context) {
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final maxSuggestionsHeight = isKeyboardOpen ? 120.0 : 180.0;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -217,8 +220,8 @@ class _GameGuessInputState extends State<GameGuessInput> {
           child: (_showSuggestions && _filteredSuggestions.isNotEmpty)
               ? Container(
                   key: const ValueKey('game_guess_suggestions_panel'),
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  constraints: BoxConstraints(maxHeight: maxSuggestionsHeight),
+                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                   decoration: BoxDecoration(
                     color: SteamColors.cardBg,
                     borderRadius: BorderRadius.circular(12),
@@ -226,7 +229,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.6),
-                        blurRadius: 16,
+                        blurRadius: 14,
                         offset: const Offset(0, -4),
                       ),
                     ],
@@ -236,7 +239,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
                     child: ListView.separated(
                       key: const ValueKey('suggestions_list_view'),
                       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 2),
                       shrinkWrap: true,
                       itemCount: _filteredSuggestions.length,
                       separatorBuilder: (_, __) => const Divider(
@@ -247,6 +250,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
                         final game = _filteredSuggestions[index];
                         return ListTile(
                           dense: true,
+                          visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
                           leading: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(

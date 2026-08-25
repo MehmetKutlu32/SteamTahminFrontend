@@ -11,6 +11,8 @@ class LocalDuelHeader extends StatelessWidget {
   final int remainingTurnSeconds;
   final int turnTimeLimit;
   final bool isMatchOver;
+  final bool isCompact;
+  final VoidCallback? onPassTurn;
 
   const LocalDuelHeader({
     super.key,
@@ -23,6 +25,8 @@ class LocalDuelHeader extends StatelessWidget {
     this.remainingTurnSeconds = 0,
     this.turnTimeLimit = 0,
     required this.isMatchOver,
+    this.isCompact = false,
+    this.onPassTurn,
   });
 
   @override
@@ -32,7 +36,88 @@ class LocalDuelHeader extends StatelessWidget {
 
     final isUrgent = turnTimeLimit > 0 && remainingTurnSeconds <= 5;
     final isWarning = turnTimeLimit > 0 && remainingTurnSeconds <= 10;
+    final targetStr = targetScore > 0 ? '/$targetScore' : '';
 
+    // KLAVYE AÇIKKEN KOMPAKT TEK SATIR BAŞLIK (Yer tasarrufu sağlar)
+    if (isCompact && !isMatchOver) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isP1Turn
+              ? Colors.cyanAccent.withValues(alpha: 0.15)
+              : Colors.orangeAccent.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isP1Turn ? Colors.cyanAccent : Colors.orangeAccent,
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Oyuncu 1 Skor
+            Text(
+              '$player1Name: $player1Score$targetStr',
+              style: TextStyle(
+                color: isP1Turn ? Colors.cyanAccent : Colors.white60,
+                fontSize: 12,
+                fontWeight: isP1Turn ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6),
+              child: Text('•', style: TextStyle(color: Colors.white24)),
+            ),
+            // Oyuncu 2 Skor
+            Text(
+              '$player2Name: $player2Score$targetStr',
+              style: TextStyle(
+                color: !isP1Turn ? Colors.orangeAccent : Colors.white60,
+                fontSize: 12,
+                fontWeight: !isP1Turn ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            // Sıra & Sayaç
+            if (turnTimeLimit > 0) ...[
+              Icon(
+                Icons.timer_rounded,
+                size: 13,
+                color: isUrgent ? Colors.redAccent : (isWarning ? Colors.amberAccent : Colors.white70),
+              ),
+              const SizedBox(width: 3),
+              Text(
+                '${remainingTurnSeconds}s',
+                style: TextStyle(
+                  color: isUrgent ? Colors.redAccent : (isWarning ? Colors.amberAccent : Colors.white),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            // Pas Geç Butonu
+            if (onPassTurn != null)
+              InkWell(
+                onTap: onPassTurn,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Text(
+                    '⏭️ Pas',
+                    style: TextStyle(color: Colors.amberAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    // NORMAL TAM BOYUTLU BAŞLIK (Klavye kapalıyken)
     return Column(
       children: [
         // Skor Kutusu
@@ -52,9 +137,9 @@ class LocalDuelHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
 
-        // Sıra Kimde & Kalan Süre Banner'ı
+        // Sıra Kimde & Kalan Süre Banner'ı + Pas Geç
         if (!isMatchOver)
           Container(
             width: double.infinity,
@@ -62,7 +147,7 @@ class LocalDuelHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: isP1Turn
                   ? Colors.cyanAccent.withValues(alpha: 0.15)
-                  : Colors.orangeAccent.withValues(alpha: 0.15),
+              : Colors.orangeAccent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isP1Turn ? Colors.cyanAccent : Colors.orangeAccent,
@@ -113,7 +198,35 @@ class LocalDuelHeader extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                 ],
+                if (onPassTurn != null)
+                  InkWell(
+                    onTap: onPassTurn,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('⏭️ ', style: TextStyle(fontSize: 12)),
+                          Text(
+                            'Pas Geç',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
