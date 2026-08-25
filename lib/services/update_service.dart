@@ -20,7 +20,7 @@ class UpdateService extends ChangeNotifier {
   bool get isDownloading => _state == AppUpdateState.downloading;
   bool get isUpdateReady => _state == AppUpdateState.readyToRestart;
 
-  static const String appVersion = 'v1.0.1';
+  static const String appVersion = 'v1.0.2';
 
   int? _currentPatch;
   int? get currentPatch => _currentPatch;
