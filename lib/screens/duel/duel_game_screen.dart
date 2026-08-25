@@ -202,6 +202,10 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
   void _showSurrenderDialog() {
     if (_isMatchOver) return;
 
+    final currentSurrenderer = _currentTurnPlayer;
+    final currentSurrendererName = currentSurrenderer == 1 ? _p1Name : _p2Name;
+    final opponentName = currentSurrenderer == 1 ? _p2Name : _p1Name;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -213,51 +217,29 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
         title: const Row(
           children: [
             Text('🏳️ ', style: TextStyle(fontSize: 20)),
-            Text('Pes Et / Maçı Bitir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Pes Et (Hükmen Mağlubiyet)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Hangi oyuncu pes etmek istiyor? Pes eden taraf hükmen mağlup sayılacaktır.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.flag_rounded, color: Colors.black, size: 16),
-              label: Text('$_p1Name Pes Etsin', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyanAccent,
-                minimumSize: const Size.fromHeight(42),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                _surrenderPlayer(1);
-              },
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.flag_rounded, color: Colors.white, size: 16),
-              label: Text('$_p2Name Pes Etsin', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orangeAccent.withValues(alpha: 0.8),
-                minimumSize: const Size.fromHeight(42),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                _surrenderPlayer(2);
-              },
-            ),
-          ],
+        content: Text(
+          'Sıra $currentSurrendererName\'de. Pes ederseniz maçı $opponentName hükmen kazanacak. Onaylıyor musunuz?',
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Vazgeç', style: TextStyle(color: Colors.white54)),
+            child: const Text('Vazgeç (Devam Et)', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.flag_rounded, color: Colors.white, size: 16),
+            label: Text('Pes Et ($opponentName Kazansın)', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _surrenderPlayer(currentSurrenderer);
+            },
           ),
         ],
       ),
