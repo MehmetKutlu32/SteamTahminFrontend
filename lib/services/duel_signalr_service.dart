@@ -185,21 +185,33 @@ class DuelSignalRService {
   void _registerHandlers() {
     if (_hubConnection == null) return;
 
-    _hubConnection!.on('RoomCreated', (arguments) {
+    void handleRoomCreated(List<dynamic>? arguments) {
       debugPrint('[SignalR] RoomCreated: $arguments');
       if (arguments != null && arguments.isNotEmpty) {
-        final roomCode = arguments[0].toString();
+        final arg = arguments[0];
+        String roomCode;
+        if (arg is Map) {
+          roomCode = arg['roomCode']?.toString() ?? arg['RoomCode']?.toString() ?? arg.toString();
+        } else {
+          roomCode = arg.toString();
+        }
         onRoomCreated?.call(roomCode);
       }
-    });
+    }
 
-    _hubConnection!.on('JoinFailed', (arguments) {
+    _hubConnection!.on('RoomCreated', handleRoomCreated);
+    _hubConnection!.on('roomCreated', handleRoomCreated);
+
+    void handleJoinFailed(List<dynamic>? arguments) {
       debugPrint('[SignalR] JoinFailed: $arguments');
       if (arguments != null && arguments.isNotEmpty) {
         final error = arguments[0].toString();
         onJoinFailed?.call(error);
       }
-    });
+    }
+
+    _hubConnection!.on('JoinFailed', handleJoinFailed);
+    _hubConnection!.on('joinFailed', handleJoinFailed);
 
     _hubConnection!.on('MatchFound', (arguments) {
       debugPrint('[SignalR] MatchFound: $arguments');
@@ -283,13 +295,25 @@ class DuelSignalRService {
     int turnTimeLimit = 30,
   }) async {
     await _ensureConnected();
+    dynamic result;
     try {
-      await _hubConnection!.invoke('CreateRoom', args: [userId, userName, targetScore, turnTimeLimit]);
+      result = await _hubConnection!.invoke('CreateRoom', args: [userId, userName, targetScore, turnTimeLimit]);
     } catch (_) {
       try {
-        await _hubConnection!.invoke('CreateRoom', args: [userId, userName, targetScore]);
+        result = await _hubConnection!.invoke('CreateRoom', args: [userId, userName, targetScore]);
       } catch (_) {
-        await _hubConnection!.invoke('CreateRoom', args: [userId, userName]);
+        result = await _hubConnection!.invoke('CreateRoom', args: [userId, userName]);
+      }
+    }
+    if (result != null) {
+      String code;
+      if (result is Map) {
+        code = result['roomCode']?.toString() ?? result['RoomCode']?.toString() ?? result.toString();
+      } else {
+        code = result.toString();
+      }
+      if (code.isNotEmpty) {
+        onRoomCreated?.call(code);
       }
     }
   }

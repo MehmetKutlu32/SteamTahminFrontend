@@ -296,34 +296,64 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
 
   Future<void> _createRoom() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty || _signalRService == null) return;
+    if (name.isEmpty) return;
     _isHost = true;
     _myRegisteredName = name;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
+      if (_signalRService == null) {
+        final apiService = context.read<ApiService>();
+        final hubUrl = '${apiService.baseUrl}/duelHub';
+        _signalRService = DuelSignalRService(customUrl: hubUrl);
+        _setupSignalRListeners();
+      }
       await _signalRService!.createRoom(
         userId: 1,
         userName: name,
         targetScore: _targetScore,
         turnTimeLimit: _turnTimeLimit,
       );
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      debugPrint('Create room error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Oda oluşturulamadı. Lütfen tekrar deneyin.';
+        });
+      }
     }
   }
 
   Future<void> _joinRoom() async {
     final name = _nameController.text.trim();
     final code = _roomCodeController.text.trim().toUpperCase();
-    if (name.isEmpty || code.isEmpty || _signalRService == null) return;
+    if (name.isEmpty || code.isEmpty) return;
     _isHost = false;
     _myRegisteredName = name;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
+      if (_signalRService == null) {
+        final apiService = context.read<ApiService>();
+        final hubUrl = '${apiService.baseUrl}/duelHub';
+        _signalRService = DuelSignalRService(customUrl: hubUrl);
+        _setupSignalRListeners();
+      }
       _myRoomCode = code;
       await _signalRService!.joinRoom(roomCode: code, userId: 2, userName: name);
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      debugPrint('Join room error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Odaya bağlanılamadı. Kodu kontrol edin.';
+        });
+      }
     }
   }
 
