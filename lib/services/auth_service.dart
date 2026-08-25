@@ -8,7 +8,7 @@ class AuthService {
   static const String _keyUserSession = 'user_auth_session';
   static const String _keyLastGuestName = 'last_guest_name';
   static const String _googleClientId =
-      '258890473227-cvoj01rimnp8ct2p8tcjlg6usc665pa2.apps.googleusercontent.com';
+      '258890473227-addok4m8p6f0qqp4oh6ho1p1cur8c0u0.apps.googleusercontent.com';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb ? _googleClientId : null,
