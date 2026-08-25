@@ -225,8 +225,17 @@ class _OnlineDuelScreenState extends State<OnlineDuelScreen> {
     _signalRService!.onGameOver = (winnerId, finalScore) {
       if (!mounted) return;
       _stopTurnTimer();
+
+      final bool isP1 = _isHost;
+      final bool iWon = (isP1 && (_player1Score > _player2Score || winnerId == 'Player1' || winnerId == '1')) ||
+          (!isP1 && (_player2Score > _player1Score || winnerId == 'Player2' || winnerId == '2'));
+
+      if (iWon) {
+        context.read<GameProvider>().recordOnlineDuelWin();
+      }
+
       setState(() {
-        _gameOverMessage = 'Oyun Bitti! Skor: $finalScore';
+        _gameOverMessage = iWon ? '🏆 TEBRİKLER! Maçı Kazandınız!\nSkor: $finalScore' : 'Oyun Bitti! Skor: $finalScore';
         _phase = OnlineDuelPhase.gameOver;
       });
     };

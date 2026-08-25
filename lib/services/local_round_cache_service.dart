@@ -251,6 +251,7 @@ class LocalRoundCacheService {
     List<String>? claimedAchievements,
     String? achievementProgressJson,
     int? timeAttackHighScore,
+    int? onlineDuelWins,
     String? userId,
   }) async {
     try {
@@ -275,6 +276,7 @@ class LocalRoundCacheService {
         'claimedAchievements': claimedAchievements,
         'achievementProgressJson': achievementProgressJson,
         'timeAttackHighScore': timeAttackHighScore,
+        'onlineDuelWins': onlineDuelWins,
       };
       await prefs.setString(key, jsonEncode(data));
     } catch (e) {

@@ -427,7 +427,7 @@ class PlayerProfileModal extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _buildStatTile('🥊 Düello Galibiyet', 'P1: ${provider.duelP1Wins} • P2: ${provider.duelP2Wins}', Colors.cyanAccent),
+                    child: _buildStatTile('🌐 Online Düello Galibiyet', '${provider.onlineDuelWins}', Colors.cyanAccent),
                   ),
                 ],
               ),

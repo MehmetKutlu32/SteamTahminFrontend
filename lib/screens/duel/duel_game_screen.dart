@@ -179,11 +179,6 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
         _revealedCount = maxReviews;
         _roundResultMessage = '🎉 $currentName Doğru Bildi! (+1 Puan)\n🎮 Doğru Cevap: $gameName';
       });
-
-      if (_isMatchOver) {
-        final winner = _player1Score >= _targetScore ? 1 : 2;
-        provider.recordDuelWin(winner);
-      }
     } else {
       HapticFeedback.mediumImpact();
       final nextPlayer = _currentTurnPlayer == 1 ? 2 : 1;
@@ -321,10 +316,6 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
       _revealedCount = maxReviews;
       _roundResultMessage = '🏳️ $forfeiterName bu raundu geçti. (+1 Puan $winnerName)\n🎮 Doğru Cevap: $gameName';
     });
-
-    if (_isMatchOver) {
-      provider.recordDuelWin(winningPlayer);
-    }
   }
 
   void _showMutualDrawConfirmationDialog() {
@@ -467,8 +458,6 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
         _roundResultMessage = '🏳️ $_p2Name pes etti! $_p1Name maçı kazandı!';
       }
     });
-    final winner = playerNum == 1 ? 2 : 1;
-    provider.recordDuelWin(winner);
   }
 
   @override

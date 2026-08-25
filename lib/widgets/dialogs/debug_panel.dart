@@ -190,8 +190,7 @@ class DebugPanelModal {
 
                           // Zaman Yarışı & Düello Eylemleri
                           _buildActionBtn('⚡ 60s Skoru: 10', Colors.redAccent, () => provider.recordTimeAttackResult(10)),
-                          _buildActionBtn('🔵 Düello: P1 Kazan', Colors.cyanAccent, () => provider.recordDuelWin(1)),
-                          _buildActionBtn('🟠 Düello: P2 Kazan', Colors.orangeAccent, () => provider.recordDuelWin(2)),
+                          _buildActionBtn('🌐 Online Düello Kazan', Colors.cyanAccent, () => provider.recordOnlineDuelWin()),
 
                           // Oyun Akışı
                           _buildActionBtn('🎯 Doğru Bildir', Colors.green, () {

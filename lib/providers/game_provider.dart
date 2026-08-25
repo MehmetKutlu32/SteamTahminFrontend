@@ -80,10 +80,9 @@ class GameProvider extends ChangeNotifier {
   final Map<String, int> _achievementProgress = {};
   final Set<String> _claimedAchievementIds = {};
 
-  // Zaman Yarışı & 1v1 Düello İstatistikleri
+  // Zaman Yarışı & 1v1 Online Düello İstatistikleri
   int _timeAttackHighScore = 0;
-  int _duelP1Wins = 0;
-  int _duelP2Wins = 0;
+  int _onlineDuelWins = 0;
 
   // Sahtekar Modu Özel Durumu
   final GameModeSession _imposterSession = GameModeSession();
@@ -156,8 +155,7 @@ class GameProvider extends ChangeNotifier {
 
   // Zaman Yarışı & Düello Getters
   int get timeAttackHighScore => _timeAttackHighScore;
-  int get duelP1Wins => _duelP1Wins;
-  int get duelP2Wins => _duelP2Wins;
+  int get onlineDuelWins => _onlineDuelWins;
 
   // Günlük Görev Getters
   List<DailyQuest> get dailyQuests => List.unmodifiable(_dailyQuests);
@@ -471,20 +469,11 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void recordDuelWin(int player) {
-    if (player == 1) {
-      _duelP1Wins += 1;
-    } else {
-      _duelP2Wins += 1;
-    }
+  void recordOnlineDuelWin() {
+    _onlineDuelWins += 1;
     incrementAchievementProgress('duel_first_win', 1);
     incrementAchievementProgress('duel_5_wins', 1);
-    notifyListeners();
-  }
-
-  void resetDuelCareerStats() {
-    _duelP1Wins = 0;
-    _duelP2Wins = 0;
+    _saveProfile();
     notifyListeners();
   }
 
@@ -524,6 +513,7 @@ class GameProvider extends ChangeNotifier {
     _bestStreak = 0;
     _totalChestsOpened = 0;
     _timeAttackHighScore = 0;
+    _onlineDuelWins = 0;
     _discoveredPerkIds.clear();
     _purchasedShopItemIds.clear();
     _claimedAchievementIds.clear();
@@ -575,6 +565,7 @@ class GameProvider extends ChangeNotifier {
       claimedAchievements: _claimedAchievementIds.toList(),
       achievementProgressJson: _achievementProgress.isNotEmpty ? jsonEncode(_achievementProgress) : null,
       timeAttackHighScore: _timeAttackHighScore,
+      onlineDuelWins: _onlineDuelWins,
       userId: _activeUserId,
     );
 
@@ -874,6 +865,7 @@ class GameProvider extends ChangeNotifier {
     _bestStreak = profile['bestStreak'] ?? 0;
     _totalChestsOpened = profile['totalChestsOpened'] ?? 0;
     _timeAttackHighScore = profile['timeAttackHighScore'] ?? 0;
+    _onlineDuelWins = profile['onlineDuelWins'] ?? 0;
 
     // Arka planda sessizce bulut profilini kontrol et (Açılışı asla bekletmez!)
     if (_activeUserId != null && _activeUserId!.isNotEmpty) {

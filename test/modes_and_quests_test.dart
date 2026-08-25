@@ -55,9 +55,8 @@ void main() {
       provider.recordTimeAttackResult(6);
       expect(provider.timeAttackHighScore, 6);
 
-      provider.recordDuelWin(1);
-      expect(provider.duelP1Wins, 1);
-      expect(provider.duelP2Wins, 0);
+      provider.recordOnlineDuelWin();
+      expect(provider.onlineDuelWins, 1);
     });
 
     test('Imposter mode switching, accusing and card selection', () {
