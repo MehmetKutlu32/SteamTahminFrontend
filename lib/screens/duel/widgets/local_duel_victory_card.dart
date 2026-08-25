@@ -22,7 +22,8 @@ class LocalDuelVictoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final winnerName = player1Score >= targetScore ? player1Name : player2Name;
+    final bool isDraw = player1Score == player2Score;
+    final winnerName = player1Score > player2Score ? player1Name : player2Name;
 
     return Container(
       width: double.infinity,
@@ -35,7 +36,7 @@ class LocalDuelVictoryCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '👑 $winnerName KAZANDI! 🏆',
+            isDraw ? '🤝 DOSTÇA BERABERLİK!' : '👑 $winnerName KAZANDI! 🏆',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.amberAccent, fontSize: 17, fontWeight: FontWeight.w900),
           ),

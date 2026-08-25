@@ -196,8 +196,10 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
     }
   }
 
+  bool _isForcedDraw = false;
+
   bool get _isMatchOver =>
-      _targetScore > 0 && (_player1Score >= _targetScore || _player2Score >= _targetScore);
+      _isForcedDraw || (_targetScore > 0 && (_player1Score >= _targetScore || _player2Score >= _targetScore));
 
   void _showSurrenderDialog() {
     if (_isMatchOver) return;
@@ -217,33 +219,69 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
         title: const Row(
           children: [
             Text('🏳️ ', style: TextStyle(fontSize: 20)),
-            Text('Pes Et (Hükmen Mağlubiyet)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+            Text('Pes Et / Maçı Bitir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
-        content: Text(
-          'Sıra $currentSurrendererName\'de. Pes ederseniz maçı $opponentName hükmen kazanacak. Onaylıyor musunuz?',
-          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sıra $currentSurrendererName\'de. Maçı nasıl sonlandırmak istersiniz?',
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.flag_rounded, color: Colors.white, size: 16),
+              label: Text(
+                '$currentSurrendererName Pes Etsin ($opponentName Kazansın)',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11.5),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                minimumSize: const Size.fromHeight(40),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _surrenderPlayer(currentSurrenderer);
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.handshake_rounded, color: Colors.black, size: 16),
+              label: const Text(
+                '🤝 Dostça / Berabere Bitir (İki Taraf Razı)',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 11.5),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amberAccent,
+                minimumSize: const Size.fromHeight(40),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _endMatchAsDraw();
+              },
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Vazgeç (Devam Et)', style: TextStyle(color: Colors.white54)),
           ),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.flag_rounded, color: Colors.white, size: 16),
-            label: Text('Pes Et ($opponentName Kazansın)', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _surrenderPlayer(currentSurrenderer);
-            },
-          ),
         ],
       ),
     );
+  }
+
+  void _endMatchAsDraw() {
+    _stopTurnTimer();
+    setState(() {
+      _isForcedDraw = true;
+      _roundResultMessage = '🤝 Maç Dostça / Berabere Sonlandırıldı!';
+    });
   }
 
   void _surrenderPlayer(int playerNum) {
