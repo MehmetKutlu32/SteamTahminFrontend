@@ -475,7 +475,7 @@ class PlayerProfileModal extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Sürüm ${UpdateService.appVersion}',
+                                'Sürüm ${updateService.displayVersion}',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 11.5,

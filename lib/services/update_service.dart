@@ -25,6 +25,13 @@ class UpdateService extends ChangeNotifier {
   int? _currentPatch;
   int? get currentPatch => _currentPatch;
 
+  String get displayVersion {
+    if (_currentPatch != null && _currentPatch! > 0) {
+      return 'v1.0.${3 + _currentPatch!}';
+    }
+    return appVersion;
+  }
+
   String? _statusMessage;
   String? get statusMessage => _statusMessage;
 
@@ -35,6 +42,7 @@ class UpdateService extends ChangeNotifier {
   Future<void> _init() async {
     try {
       _currentPatch = await _updater.readCurrentPatch().then((p) => p?.number);
+      notifyListeners();
     } catch (_) {}
     // Uygulama açılışında sessizce kontrol et
     checkForUpdates(silent: true);
