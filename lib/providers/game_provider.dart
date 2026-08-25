@@ -854,28 +854,9 @@ class GameProvider extends ChangeNotifier {
     _totalChestsOpened = profile['totalChestsOpened'] ?? 0;
     _timeAttackHighScore = profile['timeAttackHighScore'] ?? 0;
 
-    // Eğer Google hesabı ise veritabanından en güncel bulut profilini çekip senkronize et
+    // Arka planda sessizce bulut profilini kontrol et (Açılışı asla bekletmez!)
     if (_activeUserId != null && _activeUserId!.isNotEmpty) {
-      try {
-        final cloudProfile = await _apiService.getProfile(_activeUserId!);
-        if (cloudProfile != null) {
-          final cloudXp = cloudProfile['xp'] as int? ?? 0;
-          final cloudCoins = cloudProfile['coins'] as int? ?? 0;
-          final cloudWins = cloudProfile['totalWins'] as int? ?? 0;
-
-          if (cloudXp > _totalXp) {
-            _totalXp = cloudXp;
-          }
-          if (cloudCoins > _coins) {
-            _coins = cloudCoins;
-          }
-          if (cloudWins > _totalTowerWins) {
-            _totalTowerWins = cloudWins;
-          }
-        }
-      } catch (e) {
-        debugPrint('Cloud profile fetch on init error: $e');
-      }
+      _syncCloudProfileInBackground(_activeUserId!);
     }
 
     final savedDiscovered = (profile['discoveredPerks'] as List<dynamic>?)?.cast<String>() ?? [];
@@ -925,6 +906,35 @@ class GameProvider extends ChangeNotifier {
     }
 
     _silentWarmUpAndRefillQueue();
+  }
+
+  Future<void> _syncCloudProfileInBackground(String userId) async {
+    try {
+      final cloudProfile = await _apiService.getProfile(userId);
+      if (cloudProfile != null) {
+        final cloudXp = cloudProfile['xp'] as int? ?? 0;
+        final cloudCoins = cloudProfile['coins'] as int? ?? 0;
+        final cloudWins = cloudProfile['totalWins'] as int? ?? 0;
+
+        bool changed = false;
+        if (cloudXp > _totalXp) {
+          _totalXp = cloudXp;
+          changed = true;
+        }
+        if (cloudCoins > _coins) {
+          _coins = cloudCoins;
+          changed = true;
+        }
+        if (cloudWins > _totalTowerWins) {
+          _totalTowerWins = cloudWins;
+          changed = true;
+        }
+        if (changed) {
+          await _saveProfile();
+          notifyListeners();
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> loadGamesList() async {
