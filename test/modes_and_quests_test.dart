@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:steam_tahmin_frontend/models/achievement_models.dart';
 import 'package:steam_tahmin_frontend/models/roguelike_models.dart';
 import 'package:steam_tahmin_frontend/providers/game_provider.dart';
+import 'package:steam_tahmin_frontend/data/imposter_review_catalog.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +69,26 @@ void main() {
 
       provider.selectImposterCard(2);
       expect(provider.selectedImposterCardIndex, 2);
+    });
+
+    test('ImposterCatalog provides large pool and prevents consecutive duplicate reviews', () {
+      ImposterCatalog.resetHistory();
+      expect(ImposterCatalog.fakePool.length >= 60, isTrue);
+
+      final drawnReviews = <String>{};
+      const drawCount = 35;
+
+      for (int i = 0; i < drawCount; i++) {
+        final review = ImposterCatalog.getRandomFakeReview();
+        expect(review.yorum.isNotEmpty, isTrue);
+        expect(review.kullaniciAdi.isNotEmpty, isTrue);
+        expect(drawnReviews.contains(review.yorum), isFalse,
+            reason: 'Review "${review.yorum}" was repeated within $drawCount consecutive draws!');
+        drawnReviews.add(review.yorum);
+      }
+
+      expect(drawnReviews.length, drawCount);
+      expect(ImposterCatalog.recentHistoryCount, drawCount);
     });
   });
 }

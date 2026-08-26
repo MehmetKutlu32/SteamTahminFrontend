@@ -12,6 +12,7 @@ import '../models/shop_models.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/local_round_cache_service.dart';
+import '../data/imposter_review_catalog.dart';
 
 /// Her oyun modunun (Sonsuz Klasik, Roguelike Kule, Sahtekar) oyun turu ve ilerleme durumunu
 /// birbirinden %100 izole tutan oturum modeli.
@@ -1022,14 +1023,7 @@ class GameProvider extends ChangeNotifier {
     final random = Random();
     _imposterCardIndex = random.nextInt(session.revealedReviewCount);
 
-    final fakePool = [
-      const GameReviewDto(sira: 99, kullaniciAdi: 'GamerX', oynamaSuresiSaati: 145, yorum: 'Grafikleri fena değil ama sunucu çökmeleri ve eşleştirme sistemi oyunu mahvetmiş. Kesinlikle tavsiye etmiyorum.', tavsiye: false),
-      const GameReviewDto(sira: 99, kullaniciAdi: 'ZombiAvcisi', oynamaSuresiSaati: 520, yorum: 'Envanter yönetimi ve zanaat sistemi inanılmaz derin. Arkadaşlarla üs kurup zombi dalgalarına karşı hayatta kalmak çok keyifli.', tavsiye: true),
-      const GameReviewDto(sira: 99, kullaniciAdi: 'HikayeSever', oynamaSuresiSaati: 88, yorum: 'Hikayesi ve müzikleri insanı büyülüyor. Karakterler arası diyaloglar ve seçimlerin sonuca etkisi harika işlenmiş.', tavsiye: true),
-      const GameReviewDto(sira: 99, kullaniciAdi: 'BossHunter', oynamaSuresiSaati: 310, yorum: 'Piksel sanat tasarımı ve boss dövüşlerindeki zorluk dengesi şahane. Souls-like türünü sevenler kaçırmasın.', tavsiye: true),
-      const GameReviewDto(sira: 99, kullaniciAdi: 'DriftKrali', oynamaSuresiSaati: 45, yorum: 'Fizik motoru aşırı eğlenceli ve komik. Arabayla virajı alamayıp uçurumdan yuvarlanırken kahkahalara boğulduk.', tavsiye: true),
-    ];
-    final fake = fakePool[random.nextInt(fakePool.length)];
+    final fake = ImposterCatalog.getRandomFakeReview();
     if (_imposterCardIndex! < session.reviews.length) {
       session.reviews[_imposterCardIndex!] = fake;
     }
