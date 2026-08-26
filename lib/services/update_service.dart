@@ -68,6 +68,16 @@ class UpdateService extends ChangeNotifier {
         _state = AppUpdateState.readyToRestart;
         _statusMessage = '✨ Güncelleme yüklendi! Uygulamayı kapatıp açarak yenilikleri kullanabilirsiniz.';
         notifyListeners();
+      } else if (status == UpdateStatus.restartRequired) {
+        _state = AppUpdateState.readyToRestart;
+        _statusMessage = '✨ Güncelleme hazır! Uygulamayı kapatıp açarak yeni sürüme geçebilirsiniz.';
+        notifyListeners();
+      } else if (status == UpdateStatus.unavailable) {
+        _state = AppUpdateState.idle;
+        _statusMessage = kDebugMode
+            ? 'Hata ayıklama (Debug) modunda OTA güncellemesi devre dışıdır.'
+            : 'Güncelleme servisi bu derlemede kullanılamıyor.';
+        notifyListeners();
       } else {
         _state = AppUpdateState.upToDate;
         _statusMessage = 'Uygulamanız en güncel sürümde.';
@@ -76,7 +86,7 @@ class UpdateService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Shorebird update check error: $e');
       _state = AppUpdateState.error;
-      _statusMessage = 'Güncelleme kontrolü yapılamadı.';
+      _statusMessage = 'Güncelleme kontrolü yapılamadı: $e';
       notifyListeners();
     }
   }
