@@ -26,8 +26,7 @@ class AuthService {
 
   bool get isAdmin =>
       _currentUser != null &&
-      _currentUser!.email != null &&
-      adminEmails.contains(_currentUser!.email!.trim().toLowerCase());
+      adminEmails.contains(_currentUser!.email.trim().toLowerCase());
 
   /// Kayıtlı kullanıcı oturumunu yerel depolamadan yükle
   Future<UserModel?> loadSavedUser() async {

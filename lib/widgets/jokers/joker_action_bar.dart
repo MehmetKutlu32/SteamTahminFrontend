@@ -52,8 +52,8 @@ class JokerActionBar extends StatelessWidget {
           );
         }
 
-        // Kural: İlk 2 tahmin yapılmadan ekstra yorum jokeri açılmaz (3. ipucunda açılır)
-        final isReviewJokerAvailable = provider.revealedReviewCount >= 3 || provider.attemptsRemaining <= 3;
+        // Kural: İlk 2 tahmin yapılmadan ekstra yorum jokeri açılmaz (Kule modunda veya 3. ipucunda açılır)
+        final isReviewJokerAvailable = provider.isRoguelike || provider.revealedReviewCount >= 3 || provider.attemptsRemaining <= 3;
         final isReviewCapped = provider.revealedReviewCount >= 20;
         final reviewCost = provider.nextExtraReviewCost;
         final canAffordReview = provider.diamonds >= reviewCost && isReviewJokerAvailable && !isReviewCapped;

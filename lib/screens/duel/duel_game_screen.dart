@@ -448,7 +448,6 @@ class _DuelGameScreenState extends State<DuelGameScreen> {
 
   void _surrenderPlayer(int playerNum) {
     _stopTurnTimer();
-    final provider = context.read<GameProvider>();
     setState(() {
       if (playerNum == 1) {
         _player2Score = _targetScore;

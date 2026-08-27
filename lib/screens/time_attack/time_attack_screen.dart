@@ -19,6 +19,7 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
   int _secondsLeft = 60;
   int _scoreGuessed = 0;
   int _combo = 0;
+  int _currentReviewIndex = 0;
   bool _isGameOver = false;
 
   String? _feedbackMessage;
@@ -69,6 +70,7 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
       _secondsLeft = 60;
       _scoreGuessed = 0;
       _combo = 0;
+      _currentReviewIndex = 0;
       _isGameOver = false;
       _feedbackMessage = null;
     });
@@ -112,6 +114,7 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
       setState(() {
         _scoreGuessed += 1;
         _combo += 1;
+        _currentReviewIndex = 0;
         _secondsLeft = (_secondsLeft + bonusSeconds).clamp(0, 99);
       });
 
@@ -130,14 +133,33 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
     }
   }
 
+  /// 💬 Yorumu Geç (Sıradaki İpucu): -2 saniye süre cezası
   void _skipReview(GameProvider provider) {
     if (_isGameOver || provider.isLoadingRound) return;
-    HapticFeedback.lightImpact();
+    final reviews = provider.reviews;
+    if (_currentReviewIndex < reviews.length - 1) {
+      HapticFeedback.lightImpact();
+      setState(() {
+        _currentReviewIndex += 1;
+        _secondsLeft = (_secondsLeft - 2).clamp(1, 99);
+      });
+      _showFeedback('💬 Yeni Yorum Açıldı (-2s)', Colors.amberAccent);
+    } else {
+      HapticFeedback.selectionClick();
+      _showFeedback('⚠️ Bu oyunun tüm yorumları açık! Oyunu atlayabilirsiniz.', Colors.orangeAccent);
+    }
+  }
+
+  /// ⏩ Oyunu Atla (Yeni Oyun): -5 saniye süre cezası
+  void _skipGame(GameProvider provider) {
+    if (_isGameOver || provider.isLoadingRound) return;
+    HapticFeedback.mediumImpact();
     setState(() {
       _combo = 0;
-      _secondsLeft = (_secondsLeft - 2).clamp(1, 99); // -2s Pas Cezası
+      _currentReviewIndex = 0;
+      _secondsLeft = (_secondsLeft - 5).clamp(1, 99);
     });
-    _showFeedback('⏩ Pas Geçildi (-2s)! Sıradaki Oyun...', Colors.amberAccent);
+    _showFeedback('⏩ Oyun Atlandı (-5s)! Sıradaki Oyun...', Colors.redAccent);
     provider.startNewRound();
   }
 
@@ -191,7 +213,6 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
                   children: [
                     // Süre & Skor & Kombo Başlığı
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         // Kalan Süre
                         Container(
@@ -207,6 +228,7 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
                             ),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.timer_rounded,
@@ -225,47 +247,28 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(width: 8),
 
                         // Bildiğin Oyun Sayısı
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.amberAccent),
-                          ),
-                          child: Row(
-                            children: [
-                              const Text('🎯 ', style: TextStyle(fontSize: 14)),
-                              Text(
-                                '$_scoreGuessed Oyun',
-                                style: const TextStyle(
-                                  color: Colors.amberAccent,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Pas Geç Butonu
-                        InkWell(
-                          onTap: () => _skipReview(provider),
-                          borderRadius: BorderRadius.circular(10),
+                        Expanded(
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.white10,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.white24),
+                              color: Colors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.amberAccent),
                             ),
-                            child: const Row(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('⏩ ', style: TextStyle(fontSize: 12)),
+                                const Text('🎯 ', style: TextStyle(fontSize: 14)),
                                 Text(
-                                  'Pas Geç',
-                                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 12),
+                                  '$_scoreGuessed Oyun',
+                                  style: const TextStyle(
+                                    color: Colors.amberAccent,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ],
                             ),
@@ -273,7 +276,8 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
                         ),
 
                         // Kombo Çarpanı
-                        if (_combo > 1)
+                        if (_combo > 1) ...[
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             decoration: BoxDecoration(
@@ -290,9 +294,105 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
+
+                    // İkili Pas / Atla Butonları
+                    Row(
+                      children: [
+                        // 1. Buton: Yorumu Geç / Sıradaki İpucu (-2s)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _skipReview(provider),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B2838),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: SteamColors.steamCyan.withValues(alpha: 0.4)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.speaker_notes_rounded, size: 15, color: SteamColors.steamCyan),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'Yorumu Geç',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withValues(alpha: 0.25),
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.6)),
+                                    ),
+                                    child: const Text(
+                                      '-2s',
+                                      style: TextStyle(color: Colors.amberAccent, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // 2. Buton: Oyunu Atla (-5s)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _skipGame(provider),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.skip_next_rounded, size: 17, color: Colors.redAccent),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Oyunu Atla',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.redAccent.withValues(alpha: 0.3),
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(color: Colors.redAccent),
+                                    ),
+                                    child: const Text(
+                                      '-5s',
+                                      style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
 
                     // Canlı Geri Bildirim Banner'ı (Doğru / Yanlış / Pas Bildirimi)
                     if (_feedbackMessage != null)
@@ -340,17 +440,17 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  '💬 Hızlı İnceleme İpucu:',
-                                  style: TextStyle(
+                                Text(
+                                  '💬 İpucu (${_currentReviewIndex + 1}/${reviews.isNotEmpty ? reviews.length : 1})',
+                                  style: const TextStyle(
                                     color: SteamColors.steamCyan,
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                if (reviews.isNotEmpty)
+                                if (reviews.isNotEmpty && _currentReviewIndex < reviews.length)
                                   Text(
-                                    '⏳ ${reviews.first.oynamaSuresiSaati} Saat',
+                                    '⏳ ${reviews[_currentReviewIndex].oynamaSuresiSaati} Saat',
                                     style: const TextStyle(color: Colors.white54, fontSize: 12),
                                   ),
                               ],
@@ -359,8 +459,8 @@ class _TimeAttackScreenState extends State<TimeAttackScreen> {
                             Expanded(
                               child: SingleChildScrollView(
                                 child: Text(
-                                  reviews.isNotEmpty
-                                      ? reviews.first.yorum
+                                  reviews.isNotEmpty && _currentReviewIndex < reviews.length
+                                      ? reviews[_currentReviewIndex].yorum
                                       : (provider.isLoadingRound ? 'İnceleme yükleniyor...' : 'Açılacak inceleme bekleniyor...'),
                                   style: const TextStyle(
                                     color: SteamColors.textPrimary,

@@ -252,6 +252,9 @@ class LocalRoundCacheService {
     String? achievementProgressJson,
     int? timeAttackHighScore,
     int? onlineDuelWins,
+    int? towerCurrentFloor,
+    List<String>? towerActivePerkIds,
+    int? towerBestFloor,
     String? userId,
   }) async {
     try {
@@ -277,6 +280,9 @@ class LocalRoundCacheService {
         'achievementProgressJson': achievementProgressJson,
         'timeAttackHighScore': timeAttackHighScore,
         'onlineDuelWins': onlineDuelWins,
+        'towerCurrentFloor': towerCurrentFloor,
+        'towerActivePerkIds': towerActivePerkIds,
+        'towerBestFloor': towerBestFloor,
       };
       await prefs.setString(key, jsonEncode(data));
     } catch (e) {

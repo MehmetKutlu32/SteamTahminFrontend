@@ -117,6 +117,7 @@ class GameProvider extends ChangeNotifier {
   // Roguelike Kule Koşusu Durum Değişkenleri (Sadece Roguelike moduna özel)
   int _currentFloor = 1;
   int _lastPlayedFloor = 1;
+  int _towerBestFloor = 1;
   static const int maxFloors = 10;
   final Set<String> _activePerkIds = {};
   List<RoguelikePerk> _offeredPerks = [];
@@ -139,6 +140,7 @@ class GameProvider extends ChangeNotifier {
   GameMode get gameMode => _gameMode;
   int get currentFloor => _currentFloor;
   int get lastPlayedFloor => _lastPlayedFloor;
+  int get towerBestFloor => _towerBestFloor;
   int get maxFloor => maxFloors;
   bool get isRoguelike => _gameMode == GameMode.roguelike;
   bool get isImposterMode => _gameMode == GameMode.imposter;
@@ -567,6 +569,9 @@ class GameProvider extends ChangeNotifier {
       achievementProgressJson: _achievementProgress.isNotEmpty ? jsonEncode(_achievementProgress) : null,
       timeAttackHighScore: _timeAttackHighScore,
       onlineDuelWins: _onlineDuelWins,
+      towerCurrentFloor: _currentFloor,
+      towerActivePerkIds: _activePerkIds.toList(),
+      towerBestFloor: _towerBestFloor,
       userId: _activeUserId,
     );
 
@@ -778,7 +783,8 @@ class GameProvider extends ChangeNotifier {
     if (!_activeSession.isWordSlotUnlocked) {
       baseCost = 10;
     } else {
-      switch (_activeSession.letterHintsUsedThisRound) {
+      final used = _activeSession.letterHintsUsedThisRound;
+      switch (used) {
         case 0:
           baseCost = 8;
           break;
@@ -788,10 +794,16 @@ class GameProvider extends ChangeNotifier {
         case 2:
           baseCost = 25;
           break;
+        case 3:
+          baseCost = 40;
+          break;
         default:
-          baseCost = 35;
+          baseCost = 40 + ((used - 3) * 20);
           break;
       }
+    }
+    if (isRoguelike && _currentFloor > 1) {
+      baseCost += min(30, (_currentFloor ~/ 2) * 3);
     }
     if (hasPerk('letter_discount')) {
       baseCost = max(1, (baseCost * 0.5).round());
@@ -867,6 +879,17 @@ class GameProvider extends ChangeNotifier {
     _totalChestsOpened = profile['totalChestsOpened'] ?? 0;
     _timeAttackHighScore = profile['timeAttackHighScore'] ?? 0;
     _onlineDuelWins = profile['onlineDuelWins'] ?? 0;
+    _towerBestFloor = profile['towerBestFloor'] ?? 1;
+
+    final savedFloor = profile['towerCurrentFloor'];
+    if (savedFloor != null && savedFloor is int && savedFloor >= 1) {
+      _currentFloor = savedFloor;
+    }
+    final savedActivePerks = (profile['towerActivePerkIds'] as List<dynamic>?)?.cast<String>();
+    if (savedActivePerks != null && savedActivePerks.isNotEmpty) {
+      _activePerkIds.clear();
+      _activePerkIds.addAll(savedActivePerks);
+    }
 
     // Arka planda sessizce bulut profilini kontrol et (Açılışı asla bekletmez!)
     if (_activeUserId != null && _activeUserId!.isNotEmpty) {
@@ -1445,6 +1468,9 @@ class GameProvider extends ChangeNotifier {
           _infoToast = '👑 10. KAT BOSS YENİLDİ! KOŞU ZAFERİ!';
         } else {
           _currentFloor += 1;
+          if (_currentFloor > _towerBestFloor) {
+            _towerBestFloor = _currentFloor;
+          }
           _offeredPerks = PerkCatalog.getThreeRandomPerks(_activePerkIds);
           if (_currentFloor % 5 == 0) {
             _unopenedChests += 1;
@@ -1504,8 +1530,12 @@ class GameProvider extends ChangeNotifier {
           session.streak = 0;
 
           if (isRoguelike) {
+            if (_currentFloor > _towerBestFloor) {
+              _towerBestFloor = _currentFloor;
+            }
             _activePerkIds.clear();
             _currentFloor = 1;
+            _isRunCompleted = false;
           }
           _saveProfile();
         }
@@ -1528,8 +1558,12 @@ class GameProvider extends ChangeNotifier {
     session.streak = 0;
 
     if (isRoguelike) {
+      if (_currentFloor > _towerBestFloor) {
+        _towerBestFloor = _currentFloor;
+      }
       _activePerkIds.clear();
       _currentFloor = 1;
+      _isRunCompleted = false;
     }
 
     _saveProfile();
@@ -1746,9 +1780,14 @@ class GameProvider extends ChangeNotifier {
 
   void continueTowerAscension() {
     if (!isRoguelike) return;
+    _isRunCompleted = false;
     _currentFloor += 1;
+    if (_currentFloor > _towerBestFloor) {
+      _towerBestFloor = _currentFloor;
+    }
     _offeredPerks = PerkCatalog.getThreeRandomPerks(_activePerkIds);
     _infoToast = '⚡ Kule Rekor Tırmanışı! Kat $_currentFloor';
+    _saveProfile();
     notifyListeners();
   }
 

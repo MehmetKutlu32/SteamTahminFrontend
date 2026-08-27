@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../services/auth_service.dart';
-import '../../theme/steam_theme.dart';
 import '../branding/app_logo_widget.dart';
 
 class DuelInviteModal extends StatefulWidget {
