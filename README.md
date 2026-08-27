@@ -4,12 +4,13 @@
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.47+-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Version](https://img.shields.io/badge/Release-v1.0.5-orange?style=for-the-badge&logo=github)
 ![SignalR](https://img.shields.io/badge/SignalR-Realtime-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
 ![Shorebird](https://img.shields.io/badge/Shorebird-CodePush%20Enabled-1DB954?style=for-the-badge&logo=target&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
 
 <p align="center">
-  <b>A next-generation mobile game built with Flutter where players guess Steam games based on real user reviews, featuring roguelike progression, time attack, and real-time multiplayer duels via SignalR.</b>
+  <b>A next-generation mobile game built with Flutter where players guess Steam games based on real user reviews, featuring roguelike progression, imposter investigation, time attack, and real-time multiplayer duels via SignalR.</b>
 </p>
 
 </div>
@@ -19,6 +20,9 @@
 ## 🌟 Key Features
 
 ### 🕹️ Game Modes
+- **🕵️ Imposter (Sahtekar) Review Mode:**
+  - 5 review cards are displayed with 1 fake review hidden among 4 real ones.
+  - Read carefully, spot the imposter from a 70+ rich Steam review pool, and claim double bonus rewards.
 - **🗼 Roguelike Tower Run:** 
   - Climb through a 10-floor dynamic challenge.
   - Unlock user reviews progressively, utilize life-saving jokers, and manage health points.
