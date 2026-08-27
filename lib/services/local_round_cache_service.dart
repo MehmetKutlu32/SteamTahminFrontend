@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/game_item.dart';
+import '../models/game_review_dto.dart';
 import '../models/roguelike_models.dart';
 import '../models/round_model.dart';
 
@@ -93,6 +95,41 @@ class LocalRoundCacheService {
     }
 
     return null;
+  }
+
+  /// Sahtekar modu için farklı bir oyundan (tercihen benzer türden) gerçek bir Steam incelemesi bulur
+  static GameReviewDto? findRealReviewFromDifferentGame({
+    required int excludeAppId,
+    List<String> preferredGenres = const [],
+  }) {
+    final allRounds = <RoundModel>[];
+    for (final queue in _memoryQueues.values) {
+      for (final r in queue) {
+        if (r.appId != excludeAppId && r.yorumlar.isNotEmpty) {
+          allRounds.add(r);
+        }
+      }
+    }
+
+    if (allRounds.isEmpty) return null;
+
+    final random = Random();
+
+    // 1. Benzer tür eşleşmesi ara (preferredGenres ile kesişen)
+    if (preferredGenres.isNotEmpty) {
+      final matchingGenreRounds = allRounds.where((r) {
+        return r.turler.any((t) => preferredGenres.any((pg) => pg.trim().toLowerCase() == t.trim().toLowerCase()));
+      }).toList();
+
+      if (matchingGenreRounds.isNotEmpty) {
+        final chosenRound = matchingGenreRounds[random.nextInt(matchingGenreRounds.length)];
+        return chosenRound.yorumlar[random.nextInt(chosenRound.yorumlar.length)];
+      }
+    }
+
+    // 2. Eşleşen tür bulunamazsa veya aranmadıysa rastgele farklı bir oyundan çek
+    final chosenRound = allRounds[random.nextInt(allRounds.length)];
+    return chosenRound.yorumlar[random.nextInt(chosenRound.yorumlar.length)];
   }
 
   /// Arka planda sunucudan yeni çekilen turu yerel kuyruğa ekler

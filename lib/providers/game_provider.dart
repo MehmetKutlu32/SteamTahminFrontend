@@ -1035,7 +1035,7 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  void _applyImposterReviewIfNeeded(GameModeSession session) {
+  Future<void> _applyImposterReviewIfNeeded(GameModeSession session) async {
     if (_gameMode != GameMode.imposter || session.reviews.isEmpty) return;
     _selectedImposterCardIndex = null;
     _isImposterFound = false;
@@ -1046,9 +1046,43 @@ class GameProvider extends ChangeNotifier {
     final random = Random();
     _imposterCardIndex = random.nextInt(session.revealedReviewCount);
 
-    final fake = ImposterCatalog.getRandomFakeReview();
+    GameReviewDto? fakeReview;
+    final roll = random.nextDouble(); // 0.0 - 1.0
+    final currentAppId = session.currentRound?.appId ?? 0;
+    final currentGenres = session.currentRound?.turler ?? const [];
+
+    // %35 İhtimalle Statik Kurgusal Havuzdan (ImposterCatalog)
+    // %65 İhtimalle Gerçek Steam Oyunlarından (Benzer Tür veya Rastgele Oyun)
+    if (roll > 0.35) {
+      // 1. Önce yerel hafızadaki gerçek oyunlardan (varsa benzer türden) bak
+      final matchGenre = roll > 0.55; // %45'lik dilimde tür eşleştirmeyi önceliklendir
+      fakeReview = LocalRoundCacheService.findRealReviewFromDifferentGame(
+        excludeAppId: currentAppId,
+        preferredGenres: matchGenre ? currentGenres : const [],
+      );
+
+      // 2. Yerelde bulunamadıysa ve oyun listemiz varsa, farklı bir oyundan API ile çek
+      if (fakeReview == null && _gamesList.isNotEmpty) {
+        try {
+          final otherGames = _gamesList.where((g) => g.appId != currentAppId).toList();
+          if (otherGames.isNotEmpty) {
+            final randomGame = otherGames[random.nextInt(otherGames.length)];
+            final extraReviews = await _apiService.getExtraReview(appId: randomGame.appId, count: 1);
+            if (extraReviews.isNotEmpty) {
+              fakeReview = extraReviews.first;
+            }
+          }
+        } catch (_) {
+          // Ağ hatasında fallback'e düşer
+        }
+      }
+    }
+
+    // 3. Fallback / Statik Kurgusal Havuz Seçimi
+    fakeReview ??= ImposterCatalog.getRandomFakeReview();
+
     if (_imposterCardIndex! < session.reviews.length) {
-      session.reviews[_imposterCardIndex!] = fake;
+      session.reviews[_imposterCardIndex!] = fakeReview;
     }
   }
 
@@ -1141,7 +1175,7 @@ class GameProvider extends ChangeNotifier {
         _revealTwoConsonants();
       }
 
-      _applyImposterReviewIfNeeded(session);
+      await _applyImposterReviewIfNeeded(session);
 
       _isLoadingRound = false;
       _errorMessage = null;
@@ -1184,7 +1218,7 @@ class GameProvider extends ChangeNotifier {
         _revealTwoConsonants();
       }
 
-      _applyImposterReviewIfNeeded(session);
+      await _applyImposterReviewIfNeeded(session);
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Yeni tur başlatılamadı: $e';
