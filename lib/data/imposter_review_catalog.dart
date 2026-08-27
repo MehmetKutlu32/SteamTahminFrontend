@@ -553,11 +553,30 @@ class ImposterCatalog {
 
   /// Tekrarları engelleyerek havuzdan rastgele ve taze bir sahte inceleme seçer.
   /// En son kullanılan incelemeleri hafızada tutar ve en az 40+ tur boyunca aynı incelemeyi tekrar göstermez.
+  static const List<String> _realisticUsernames = [
+    'kaan1907', 'ShadowGamer', 'mert_34', 'TheDarkKnight', 'berke.exe',
+    'emir_k', 'Cpt.Price', 'noobmaster69', 'batuhan_y', 'deniz.oz',
+    'Vortex', 'can_99', 'Slayer_TR', 'yigit_10', 'baris.kaya',
+    'Hyperion', 'alperen06', 'Tolga_X', 'CyberWolf', 'eren_fb',
+    'NightRider', 'kerem_gs', 'FrostByte', 'burak.dev', 'serkan_b',
+    'Nexus', 'oguzhan_k', 'Echo_99', 'arda.b', 'DarkMatter',
+    'patates_adam', 'caykolik', 'alt_f4_ustasi', 'son_samuray', 'lag_spikes',
+    'GhostRider', 'zero_cool', 'IronClad', 'Thunder_TR', 'murat.35',
+    'ege_yldz', 'selim_pro', 'onur_can', 'taha_98', 'furkan.k',
+    'mehmet_e', 'koray_x', 'samet_tr', 'dogukan.07', 'volkan_b',
+    'X_Sniper_X', 'LordCommander', 'Captain_Jack', 'DragonSlayer', 'Speedy_06',
+    'Kaan_K', 'Emre.Arslan', 'Utku_99', 'Yasin_B', 'BarisMancho',
+    'Kuzey_Ruzgari', 'Ragnar', 'Kratos_TR', 'Geralt_06', 'Snake_Eater',
+    'NeonRider', 'PixelHunter', 'RetroGamer', 'DoomGuy_TR', 'MasterChief_99',
+    'cihan_34', 'tayfun_tr', 'ozgur_k', 'bilal_99', 'cem.kara',
+    'berk_y', 'ayberk_06', 'alihan_tr', 'boran_k', 'tarik_x',
+  ];
+
   static GameReviewDto getRandomFakeReview() {
     if (fakePool.isEmpty) {
       return const GameReviewDto(
         sira: 99,
-        kullaniciAdi: 'GamerX',
+        kullaniciAdi: 'kaan1907',
         oynamaSuresiSaati: 100,
         yorum: 'Harika bir deneyimdi, kesinlikle tavsiye ediyorum.',
         tavsiye: true,
@@ -591,7 +610,15 @@ class ImposterCatalog {
     final chosenIndex = availableIndices[random.nextInt(availableIndices.length)];
     _recentlyUsedIndices.add(chosenIndex);
 
-    return fakePool[chosenIndex];
+    final baseReview = fakePool[chosenIndex];
+    final naturalUsername = _realisticUsernames[random.nextInt(_realisticUsernames.length)];
+    final variation = random.nextInt(15) - 7;
+    final naturalPlaytime = max(5, baseReview.oynamaSuresiSaati + variation);
+
+    return baseReview.copyWith(
+      kullaniciAdi: naturalUsername,
+      oynamaSuresiSaati: naturalPlaytime,
+    );
   }
 
   /// Testler veya oturum sıfırlamaları için geçmişi temizleme metodu

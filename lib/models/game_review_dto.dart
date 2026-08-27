@@ -94,4 +94,22 @@ class GameReviewDto {
       if (tarih != null) 'tarih': tarih,
     };
   }
+
+  GameReviewDto copyWith({
+    int? sira,
+    String? kullaniciAdi,
+    int? oynamaSuresiSaati,
+    String? yorum,
+    bool? tavsiye,
+    String? tarih,
+  }) {
+    return GameReviewDto(
+      sira: sira ?? this.sira,
+      kullaniciAdi: kullaniciAdi ?? this.kullaniciAdi,
+      oynamaSuresiSaati: oynamaSuresiSaati ?? this.oynamaSuresiSaati,
+      yorum: yorum ?? this.yorum,
+      tavsiye: tavsiye ?? this.tavsiye,
+      tarih: tarih ?? this.tarih,
+    );
+  }
 }
