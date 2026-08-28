@@ -356,7 +356,7 @@ class _GameResultDialogState extends State<GameResultDialog> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    '${provider.currentLevelXp} / 1000 XP',
+                                    '${provider.currentLevelXp} / ${provider.nextLevelRequiredXp} XP',
                                     style: const TextStyle(
                                       color: SteamColors.textSecondary,
                                       fontSize: 11,

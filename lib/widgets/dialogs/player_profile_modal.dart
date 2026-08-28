@@ -140,7 +140,7 @@ class PlayerProfileModal extends StatelessWidget {
                           style: TextStyle(color: SteamColors.textSecondary, fontSize: 11.5),
                         ),
                         Text(
-                          '${provider.currentLevelXp} / 1000 XP',
+                          '${provider.currentLevelXp} / ${provider.nextLevelRequiredXp} XP',
                           style: const TextStyle(
                             color: SteamColors.textPrimary,
                             fontSize: 11.5,

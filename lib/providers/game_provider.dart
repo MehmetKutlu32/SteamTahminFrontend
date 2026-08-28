@@ -203,6 +203,7 @@ class GameProvider extends ChangeNotifier {
   int get totalXp => _totalXp;
   int get level => PlayerRank.calculateLevel(_totalXp);
   int get currentLevelXp => PlayerRank.currentLevelXp(_totalXp);
+  int get nextLevelRequiredXp => PlayerRank.xpNeededForNextLevel(_totalXp);
   double get levelProgress => PlayerRank.levelProgress(_totalXp);
   String get rankTitle => PlayerRank.getRankTitle(level);
   String get rankBadge => PlayerRank.getRankBadge(level);
