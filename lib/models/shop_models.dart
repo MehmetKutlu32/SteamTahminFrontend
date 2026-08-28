@@ -275,8 +275,8 @@ class ShopCatalog {
       accentColor: Color(0xFFFFB74D),
     ),
     ShopItem(
-      id: 'title_steam_billionaire',
-      name: 'Steam Milyarderi',
+      id: 'title_gold_tycoon',
+      name: 'Altın Zengini',
       description: 'Altınlarını nereye harcayacağını bilemeyen gerçek koleksiyoncu unvanı.',
       iconEmoji: '💰',
       type: ShopItemType.title,
@@ -286,7 +286,7 @@ class ShopCatalog {
     ShopItem(
       id: 'title_grandmaster',
       name: 'Efsanevi Büyükusta',
-      description: 'Steam inceleme evreninin zirvesinde yer alan nihai prestij unvanı.',
+      description: 'Tüm inceleme evreninin zirvesinde yer alan nihai prestij unvanı.',
       iconEmoji: '🏆',
       type: ShopItemType.title,
       priceGold: 1000,
