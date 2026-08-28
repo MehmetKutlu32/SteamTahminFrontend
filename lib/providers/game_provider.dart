@@ -431,16 +431,16 @@ class GameProvider extends ChangeNotifier {
       session.isRoundWon = true;
       session.streak += 1;
       _totalWins += 1;
-      session.lastWonCoins = 50;
-      session.lastWonDiamonds = 2;
-      _coins += 50;
-      _diamonds += 2;
-      _totalXp += 500;
+      session.lastWonCoins = 25;
+      session.lastWonDiamonds = 1;
+      _coins += 25;
+      _diamonds += 1;
+      _totalXp += 200;
 
       incrementAchievementProgress('first_win', 1);
       incrementAchievementProgress('imposter_hunter', 1);
       incrementAchievementProgress('imposter_master', 1);
-      _infoToast = '🎉 SAHTEKAR YAKALANDI! Turu Kazandınız! 🕵️ (+50 🪙, +2 💎)';
+      _infoToast = '🎉 SAHTEKAR YAKALANDI! Turu Kazandınız! 🕵️ (+25 🪙, +1 💎)';
       _saveProfile();
       notifyListeners();
     } else {
@@ -980,15 +980,19 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final cachedGames = await LocalRoundCacheService.loadGamesList();
+      if (cachedGames.isNotEmpty) {
+        _gamesList = cachedGames;
+      }
       final games = await _apiService.getGames();
       if (games.isNotEmpty) {
-        _gamesList = games;
         await LocalRoundCacheService.saveGamesList(games);
+        _gamesList = await LocalRoundCacheService.loadGamesList();
         _errorMessage = null;
       }
     } catch (e) {
       if (_gamesList.isEmpty) {
-        _errorMessage = 'Oyun listesi yüklenemedi: $e';
+        _gamesList = await LocalRoundCacheService.loadGamesList();
       }
     } finally {
       _isLoadingGames = false;
@@ -1047,38 +1051,16 @@ class GameProvider extends ChangeNotifier {
     _imposterCardIndex = random.nextInt(session.revealedReviewCount);
 
     GameReviewDto? fakeReview;
-    final roll = random.nextDouble(); // 0.0 - 1.0
     final currentAppId = session.currentRound?.appId ?? 0;
     final currentGenres = session.currentRound?.turler ?? const [];
 
-    // %35 İhtimalle Statik Kurgusal Havuzdan (ImposterCatalog)
-    // %65 İhtimalle Gerçek Steam Oyunlarından (Benzer Tür veya Rastgele Oyun)
-    if (roll > 0.35) {
-      // 1. Önce yerel hafızadaki gerçek oyunlardan (varsa benzer türden) bak
-      final matchGenre = roll > 0.55; // %45'lik dilimde tür eşleştirmeyi önceliklendir
-      fakeReview = LocalRoundCacheService.findRealReviewFromDifferentGame(
-        excludeAppId: currentAppId,
-        preferredGenres: matchGenre ? currentGenres : const [],
-      );
+    // 1. Önce geçmişte tamamlanmış turlardan gerçek incelemeye bak (Gelecek turlara ASLA dokunmaz)
+    fakeReview = LocalRoundCacheService.findRealReviewFromDifferentGame(
+      excludeAppId: currentAppId,
+      preferredGenres: currentGenres,
+    );
 
-      // 2. Yerelde bulunamadıysa ve oyun listemiz varsa, farklı bir oyundan API ile çek
-      if (fakeReview == null && _gamesList.isNotEmpty) {
-        try {
-          final otherGames = _gamesList.where((g) => g.appId != currentAppId).toList();
-          if (otherGames.isNotEmpty) {
-            final randomGame = otherGames[random.nextInt(otherGames.length)];
-            final extraReviews = await _apiService.getExtraReview(appId: randomGame.appId, count: 1);
-            if (extraReviews.isNotEmpty) {
-              fakeReview = extraReviews.first;
-            }
-          }
-        } catch (_) {
-          // Ağ hatasında fallback'e düşer
-        }
-      }
-    }
-
-    // 3. Fallback / Statik Kurgusal Havuz Seçimi
+    // 2. Bulunamadıysa zengin kurgusal & statik Steam inceleme havuzundan çek
     fakeReview ??= ImposterCatalog.getRandomFakeReview();
 
     if (_imposterCardIndex! < session.reviews.length) {
@@ -1176,6 +1158,7 @@ class GameProvider extends ChangeNotifier {
       }
 
       await _applyImposterReviewIfNeeded(session);
+      await LocalRoundCacheService.recordPlayedGame(cachedRound);
 
       _isLoadingRound = false;
       _errorMessage = null;
@@ -1219,6 +1202,7 @@ class GameProvider extends ChangeNotifier {
       }
 
       await _applyImposterReviewIfNeeded(session);
+      await LocalRoundCacheService.recordPlayedGame(round);
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Yeni tur başlatılamadı: $e';
@@ -1328,8 +1312,8 @@ class GameProvider extends ChangeNotifier {
       if (_gameMode == GameMode.imposter) {
         session.isWordSlotUnlocked = true;
         _revealAllLetters();
-        _coins += 25;
-        _infoToast = '🎯 Yan Görev: Oyun adını bildiniz! (+25 🪙) Şimdi sahtekarı yakalayın!';
+        _coins += 15;
+        _infoToast = '🎯 Yan Görev: Oyun adını bildiniz! (+15 🪙) Şimdi sahtekarı yakalayın!';
         _saveProfile();
         notifyListeners();
         return true;
@@ -1348,15 +1332,15 @@ class GameProvider extends ChangeNotifier {
       switch (session.attemptsRemaining) {
         case 6:
         case 5:
-          baseCoins = 10;
-          baseDiamonds = 2;
+          baseCoins = 8;
+          baseDiamonds = 1;
           break;
         case 4:
-          baseCoins = 7;
+          baseCoins = 6;
           baseDiamonds = 1;
           break;
         case 3:
-          baseCoins = 5;
+          baseCoins = 4;
           baseDiamonds = 0;
           break;
         case 2:
@@ -1369,8 +1353,8 @@ class GameProvider extends ChangeNotifier {
           break;
       }
 
-      final double streakStep = hasPerk('streak_master') ? 0.50 : 0.25;
-      final double streakMultiplier = session.streak > 1 ? (1.0 + ((session.streak - 1) * streakStep)) : 1.0;
+      final double streakStep = hasPerk('streak_master') ? 0.30 : 0.15;
+      final double streakMultiplier = session.streak > 1 ? (1.0 + ((session.streak - 1) * streakStep)).clamp(1.0, 2.5) : 1.0;
       session.lastWonCoins = (baseCoins * streakMultiplier).round();
 
       if (hasPerk('gold_merchant')) {
@@ -1388,8 +1372,8 @@ class GameProvider extends ChangeNotifier {
       }
 
       if (session.revealedReviewCount == 1 && hasPerk('gamblers_dice')) {
-        session.lastWonCoins += 100;
-        _infoToast = '🎲 Kumarbazın Zarı! +100 Ekstra Altın kazandınız!';
+        session.lastWonCoins += 50;
+        _infoToast = '🎲 Kumarbazın Zarı! +50 Ekstra Altın kazandınız!';
       }
 
       if (session.usedDiamondJokerThisRound) {
@@ -1397,7 +1381,7 @@ class GameProvider extends ChangeNotifier {
       } else {
         int streakBonusDiamonds = 0;
         if (session.streak >= 5) {
-          streakBonusDiamonds = (session.streak ~/ 5) + 1;
+          streakBonusDiamonds = (session.streak ~/ 5);
         } else if (session.streak >= 3) {
           streakBonusDiamonds = 1;
         }
@@ -1411,7 +1395,7 @@ class GameProvider extends ChangeNotifier {
 
       final oldLevel = level;
       final oldScore = session.score;
-      final basePoints = session.attemptsRemaining * 200;
+      final basePoints = session.attemptsRemaining * 35; // 5 can = 175 XP
       int earnedScore = (basePoints * streakMultiplier).round();
       
       // Kalıcı Mağaza Güçlendirmesi: Usta Çırağı (+%15 XP)
@@ -1437,8 +1421,8 @@ class GameProvider extends ChangeNotifier {
 
       if (level > oldLevel) {
         final diff = level - oldLevel;
-        _coins += 50 * diff;
-        _diamonds += 2 * diff;
+        _coins += 25 * diff;
+        _diamonds += 1 * diff;
         _justLeveledUp = true;
         _newLevel = level;
       }
@@ -1495,10 +1479,10 @@ class GameProvider extends ChangeNotifier {
           _totalTowerWins += 1;
           incrementAchievementProgress('tower_clear_1', 1);
           incrementAchievementProgress('tower_clear_5', 1);
-          _coins += 300;
-          _diamonds += 10;
-          _totalXp += 2000;
-          _unopenedChests += 2;
+          _coins += 150;
+          _diamonds += 5;
+          _totalXp += 500;
+          _unopenedChests += 1;
           _infoToast = '👑 10. KAT BOSS YENİLDİ! KOŞU ZAFERİ!';
         } else {
           _currentFloor += 1;
@@ -1508,7 +1492,7 @@ class GameProvider extends ChangeNotifier {
           _offeredPerks = PerkCatalog.getThreeRandomPerks(_activePerkIds);
           if (_currentFloor % 5 == 0) {
             _unopenedChests += 1;
-            _diamonds += 3;
+            _diamonds += 2;
             _infoToast = '👑 $_currentFloor. KAT BOSS GELDİ! Ekstra Çark Hakkı & Elmas!';
           }
         }

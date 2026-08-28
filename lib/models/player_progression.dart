@@ -1,21 +1,67 @@
 import 'package:flutter/material.dart';
 
-/// Oyuncu seviye, rütbe ve XP ilerleme modeli
+/// Oyuncu seviye, rütbe ve kademeli (progresif) XP ilerleme modeli
 class PlayerRank {
-  static const int xpPerLevel = 1000;
+  /// Bir seviyeyi tamamlamak için gereken XP miktarı (Kademeli artan eğri)
+  static int xpRequiredForLevel(int level) {
+    if (level <= 1) return 1000;
+    // Seviye 2: 1450, Seviye 3: 2000, Seviye 4: 2650, Seviye 5: 3400...
+    return 800 + (level * 350) + (level * level * 50);
+  }
 
+  /// Belirli bir seviyeye ulaşmak için gereken toplam kümülatif XP
+  static int cumulativeXpForLevel(int level) {
+    if (level <= 1) return 0;
+    int total = 0;
+    for (int lvl = 1; lvl < level; lvl++) {
+      total += xpRequiredForLevel(lvl);
+    }
+    return total;
+  }
+
+  /// Toplam XP'ye göre mevcut seviyeyi hesaplar
   static int calculateLevel(int totalXp) {
-    if (totalXp < 0) return 1;
-    return 1 + (totalXp ~/ xpPerLevel);
+    if (totalXp <= 0) return 1;
+    int level = 1;
+    int accumulated = 0;
+    while (true) {
+      final req = xpRequiredForLevel(level);
+      if (totalXp < accumulated + req) {
+        return level;
+      }
+      accumulated += req;
+      level++;
+      if (level >= 999) return 999;
+    }
   }
 
+  /// Mevcut seviyedeki kazanılan XP (Dilim içi ilerleme)
   static int currentLevelXp(int totalXp) {
-    if (totalXp < 0) return 0;
-    return totalXp % xpPerLevel;
+    if (totalXp <= 0) return 0;
+    int level = 1;
+    int accumulated = 0;
+    while (true) {
+      final req = xpRequiredForLevel(level);
+      if (totalXp < accumulated + req) {
+        return totalXp - accumulated;
+      }
+      accumulated += req;
+      level++;
+    }
   }
 
+  /// Mevcut seviyeyi tamamlamak için gereken toplam dilim XP
+  static int xpNeededForNextLevel(int totalXp) {
+    final currentLvl = calculateLevel(totalXp);
+    return xpRequiredForLevel(currentLvl);
+  }
+
+  /// Seviye ilerleme yüzdesi (0.0 - 1.0)
   static double levelProgress(int totalXp) {
-    return currentLevelXp(totalXp) / xpPerLevel;
+    if (totalXp <= 0) return 0.0;
+    final current = currentLevelXp(totalXp);
+    final target = xpNeededForNextLevel(totalXp);
+    return (current / target).clamp(0.0, 1.0);
   }
 
   static String getRankTitle(int level) {

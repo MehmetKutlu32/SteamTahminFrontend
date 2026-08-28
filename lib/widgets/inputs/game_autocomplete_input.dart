@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../data/popular_games_catalog.dart';
 import '../../models/models.dart';
 import '../../theme/steam_theme.dart';
 
@@ -59,6 +60,19 @@ class _GameGuessInputState extends State<GameGuessInput> {
     return s;
   }
 
+  static String _convertRomanNumerals(String text) {
+    return text
+        .replaceAll(RegExp(r'\bii\b'), '2')
+        .replaceAll(RegExp(r'\biii\b'), '3')
+        .replaceAll(RegExp(r'\biv\b'), '4')
+        .replaceAll(RegExp(r'\bv\b'), '5')
+        .replaceAll(RegExp(r'\bvi\b'), '6')
+        .replaceAll(RegExp(r'\bvii\b'), '7')
+        .replaceAll(RegExp(r'\bviii\b'), '8')
+        .replaceAll(RegExp(r'\bix\b'), '9')
+        .replaceAll(RegExp(r'\bx\b'), '10');
+  }
+
   static int _levenshtein(String s1, String s2) {
     if (s1 == s2) return 0;
     if (s1.isEmpty) return s2.length;
@@ -94,33 +108,58 @@ class _GameGuessInputState extends State<GameGuessInput> {
       return;
     }
 
-    // Akıllı Çoklu Kelime & Yazım Hatası Toleranslı (Fuzzy) Arama
-    _debounceTimer = Timer(const Duration(milliseconds: 60), () {
+    // Akıllı Çoklu Kelime & Kısaltma (Alias) & Yazım Hatası Toleranslı Arama
+    _debounceTimer = Timer(const Duration(milliseconds: 40), () {
       final normalizedQuery = _normalize(rawQuery);
       if (normalizedQuery.isEmpty) return;
 
-      final queryTokens = normalizedQuery.split(' ').where((t) => t.isNotEmpty).toList();
-      final games = widget.games;
-      final int len = games.length;
+      final normalizedRomanQuery = _convertRomanNumerals(normalizedQuery);
+      final queryTokens = normalizedRomanQuery.split(' ').where((t) => t.isNotEmpty).toList();
+
+      // Oyun havuzu (Aktif liste + Popüler katalog birleşimi)
+      final candidateGames = widget.games.isNotEmpty ? widget.games : PopularGamesCatalog.defaultPopularGames;
+      final int len = candidateGames.length;
 
       final List<MapEntry<GameItem, int>> scoredResults = [];
+      final Set<int> addedAppIds = {};
+
+      // 0. Takma Ad (Alias) Tam Eşleşme Kontrolü (Örn: "gta 5", "cs2", "rdr2", "witcher 3")
+      final aliasMatch = PopularGamesCatalog.commonAliases[normalizedQuery] ??
+          PopularGamesCatalog.commonAliases[normalizedRomanQuery];
+      if (aliasMatch != null) {
+        final normAlias = _normalize(aliasMatch);
+        for (final game in candidateGames) {
+          if (_normalize(game.name) == normAlias || game.name.toLowerCase().contains(aliasMatch.toLowerCase())) {
+            scoredResults.add(MapEntry(game, 200));
+            addedAppIds.add(game.appId);
+            break;
+          }
+        }
+      }
 
       for (int i = 0; i < len; i++) {
-        final game = games[i];
-        final normalizedGame = _normalize(game.name);
+        final game = candidateGames[i];
+        if (addedAppIds.contains(game.appId)) continue;
+
+        final rawNormGame = _normalize(game.name);
+        final normalizedGame = _convertRomanNumerals(rawNormGame);
         final gameTokens = normalizedGame.split(' ').where((t) => t.isNotEmpty).toList();
 
-        // 1. Doğrudan Başlama veya İçerme (En Yüksek Öncelik)
-        if (normalizedGame.startsWith(normalizedQuery)) {
-          scoredResults.add(MapEntry(game, 100));
-          continue;
-        }
-        if (normalizedGame.contains(normalizedQuery)) {
-          scoredResults.add(MapEntry(game, 80));
+        // 1. Doğrudan Başlama (En Yüksek Öncelik)
+        if (normalizedGame.startsWith(normalizedRomanQuery) || rawNormGame.startsWith(normalizedQuery)) {
+          scoredResults.add(MapEntry(game, 120));
+          addedAppIds.add(game.appId);
           continue;
         }
 
-        // 2. Çoklu Kelime & Harf Hatası Toleransı
+        // 2. Doğrudan İçerme
+        if (normalizedGame.contains(normalizedRomanQuery) || rawNormGame.contains(normalizedQuery)) {
+          scoredResults.add(MapEntry(game, 90));
+          addedAppIds.add(game.appId);
+          continue;
+        }
+
+        // 3. Çoklu Kelime & Harf Hatası Toleransı
         bool allTokensMatched = true;
         int totalDistance = 0;
 
@@ -154,14 +193,15 @@ class _GameGuessInputState extends State<GameGuessInput> {
         }
 
         if (allTokensMatched) {
-          final score = (50 - totalDistance * 10).clamp(10, 60);
+          final score = (60 - totalDistance * 10).clamp(10, 70);
           scoredResults.add(MapEntry(game, score));
+          addedAppIds.add(game.appId);
         }
       }
 
-      // Skorlarına göre sırala ve ilk 8 sonucu al
+      // Skorlarına göre sırala ve ilk 10 sonucu al
       scoredResults.sort((a, b) => b.value.compareTo(a.value));
-      final results = scoredResults.take(8).map((e) => e.key).toList();
+      final results = scoredResults.take(10).map((e) => e.key).toList();
 
       if (mounted) {
         setState(() {
@@ -206,7 +246,7 @@ class _GameGuessInputState extends State<GameGuessInput> {
   @override
   Widget build(BuildContext context) {
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
-    final maxSuggestionsHeight = isKeyboardOpen ? 120.0 : 180.0;
+    final maxSuggestionsHeight = isKeyboardOpen ? 140.0 : 200.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -258,46 +298,40 @@ class _GameGuessInputState extends State<GameGuessInput> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Icon(
-                              Icons.videogame_asset_rounded,
-                              color: SteamColors.steamBlue,
-                              size: 18,
+                              Icons.sports_esports_rounded,
+                              size: 15,
+                              color: SteamColors.steamCyan,
                             ),
                           ),
                           title: Text(
                             game.name,
                             style: const TextStyle(
-                              color: SteamColors.textPrimary,
-                              fontSize: 14,
+                              color: Colors.white,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w600,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           trailing: const Icon(
                             Icons.north_west_rounded,
-                            color: SteamColors.textSecondary,
-                            size: 16,
+                            size: 14,
+                            color: SteamColors.textMuted,
                           ),
                           onTap: () {
-                            _textController.text = game.name;
-                            _textController.selection = TextSelection.fromPosition(
-                              TextPosition(offset: game.name.length),
-                            );
-                            setState(() {
-                              _showSuggestions = false;
-                              _filteredSuggestions = [];
-                            });
+                            _submitGuess(game.name);
                           },
                         );
                       },
                     ),
                   ),
                 )
-              : const SizedBox.shrink(key: ValueKey('empty_suggestions_slot')),
+              : const SizedBox.shrink(),
         ),
 
-        // 2. Sabit Slot: Alt Giriş ve Tahmin Çubuğu
+        // 2. Tahmin Yazma Alanı (Arama Çubuğu)
         Container(
-          key: const ValueKey('game_guess_input_bar_container'),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: const BoxDecoration(
             color: SteamColors.navyBg,
             border: Border(
@@ -307,85 +341,72 @@ class _GameGuessInputState extends State<GameGuessInput> {
           child: Row(
             children: [
               Expanded(
-                child: TextField(
-                  key: const ValueKey('game_guess_text_field'),
-                  controller: _textController,
-                  focusNode: _focusNode,
-                  enabled: widget.isEnabled,
-                  style: const TextStyle(
-                    color: SteamColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: widget.isEnabled
-                        ? 'Oyun adı yazın (örn: Witcher, Portal)...'
-                        : 'Tur tamamlandı',
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: SteamColors.steamBlue,
-                      size: 22,
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: SteamColors.cardSurface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _focusNode.hasFocus
+                          ? SteamColors.steamBlue
+                          : SteamColors.cardBorder,
+                      width: 1.2,
                     ),
-                    suffixIcon: _textController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            color: SteamColors.textSecondary,
-                            onPressed: () {
-                              _textController.clear();
-                            },
-                          )
-                        : null,
                   ),
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (value) => _submitGuess(),
+                  child: TextField(
+                    controller: _textController,
+                    focusNode: _focusNode,
+                    enabled: widget.isEnabled,
+                    style: const TextStyle(
+                      color: SteamColors.textPrimary,
+                      fontSize: 14,
+                    ),
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (val) => _submitGuess(),
+                    decoration: InputDecoration(
+                      hintText: 'Oyun adını yazın (örn: GTA 5, CS2, RDR2)...',
+                      hintStyle: const TextStyle(
+                        color: SteamColors.textMuted,
+                        fontSize: 13,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: SteamColors.textSecondary,
+                        size: 20,
+                      ),
+                      suffixIcon: _textController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear_rounded, size: 18),
+                              color: SteamColors.textMuted,
+                              onPressed: () {
+                                _textController.clear();
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              // Tahmin Butonu
-              Container(
+              const SizedBox(width: 8),
+              SizedBox(
                 height: 48,
-                decoration: BoxDecoration(
-                  gradient: widget.isEnabled
-                      ? SteamColors.steamButtonGradient
-                      : null,
-                  color: widget.isEnabled ? null : SteamColors.cardSurface,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: widget.isEnabled
-                      ? [
-                          BoxShadow(
-                            color: SteamColors.steamBlue.withValues(alpha: 0.35),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
                 child: ElevatedButton(
                   onPressed: widget.isEnabled ? () => _submitGuess() : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                    backgroundColor: SteamColors.steamBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    elevation: 2,
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'TAHMİN ET',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-                    ],
-                  ),
+                  child: const Icon(Icons.send_rounded, size: 20),
                 ),
               ),
             ],

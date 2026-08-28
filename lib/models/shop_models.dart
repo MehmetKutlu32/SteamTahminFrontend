@@ -35,7 +35,7 @@ class ShopItem {
 
 class ShopCatalog {
   static const List<ShopItem> allItems = [
-    // 🎭 10 ADET ÖZEL AVATAR
+    // 🎭 ÖZEL AVATARLAR (Standart & Prestij)
     ShopItem(
       id: 'avatar_cyber_robot',
       name: 'Siber Robot',
@@ -80,6 +80,24 @@ class ShopCatalog {
       type: ShopItemType.avatar,
       priceGold: 350,
       accentColor: Color(0xFFFFD700),
+    ),
+    ShopItem(
+      id: 'avatar_golden_phoenix',
+      name: 'Altın Anka Kuşu',
+      description: 'Küllerinden saf altın alevleriyle doğan efsanevi prestij kuşu.',
+      iconEmoji: '🦅',
+      type: ShopItemType.avatar,
+      priceGold: 500,
+      accentColor: Color(0xFFFFAB00),
+    ),
+    ShopItem(
+      id: 'avatar_cyber_dragon',
+      name: 'Siber Ejderha',
+      description: 'Yüksek frekanslı neon alevler saçan siber ejderha.',
+      iconEmoji: '🐲',
+      type: ShopItemType.avatar,
+      priceGold: 750,
+      accentColor: Color(0xFF76FF03),
     ),
     ShopItem(
       id: 'avatar_diamond_champ',
@@ -127,7 +145,7 @@ class ShopCatalog {
       accentColor: Color(0xFFFF9100),
     ),
 
-    // 🎨 10 ADET ÖZEL ÇERÇEVE (Altınlı, Elmaslı, Siber vs.)
+    // 🎨 ÖZEL ÇERÇEVELER (Altınlı, Elmaslı, Prestij)
     ShopItem(
       id: 'frame_gold',
       name: '👑 Saf Altın Taç',
@@ -138,15 +156,6 @@ class ShopCatalog {
       accentColor: Color(0xFFFFD700),
     ),
     ShopItem(
-      id: 'frame_diamond',
-      name: '💎 Kusursuz Elmas',
-      description: 'Göz kamaştırıcı kristal elmas yansımalı elit profil çerçevesi.',
-      iconEmoji: '💎',
-      type: ShopItemType.frame,
-      priceDiamonds: 20,
-      accentColor: Color(0xFF00E5FF),
-    ),
-    ShopItem(
       id: 'frame_neon',
       name: '⚡ Siberpunk Neon',
       description: 'Profil avatarınıza fütüristik neon siberpunk çerçevesi ekler.',
@@ -154,6 +163,51 @@ class ShopCatalog {
       type: ShopItemType.frame,
       priceGold: 150,
       accentColor: Color(0xFF18FFFF),
+    ),
+    ShopItem(
+      id: 'frame_emerald',
+      name: '❇️ Zümrüt Muhafız',
+      description: 'Doğanın ve zenginliğin parlak zümrüt kristal çerçevesi.',
+      iconEmoji: '❇️',
+      type: ShopItemType.frame,
+      priceGold: 250,
+      accentColor: Color(0xFF00E676),
+    ),
+    ShopItem(
+      id: 'frame_obsidian',
+      name: '🖤 Karanlık Obsidyen',
+      description: 'Gizemli koyu mor gölgeli dayanıklı obsidyen çerçeve.',
+      iconEmoji: '🖤',
+      type: ShopItemType.frame,
+      priceGold: 350,
+      accentColor: Color(0xFF9575CD),
+    ),
+    ShopItem(
+      id: 'frame_royal_gold',
+      name: '⚜️ Kraliyet Altını',
+      description: 'Barok tarzda işlenmiş prestijli altın kraliyet çerçevesi.',
+      iconEmoji: '⚜️',
+      type: ShopItemType.frame,
+      priceGold: 500,
+      accentColor: Color(0xFFFFD54F),
+    ),
+    ShopItem(
+      id: 'frame_hyper_cyber',
+      name: '🌐 Hiper Matris',
+      description: 'Holografik veri akışlarıyla parıldayan hiper matris çerçevesi.',
+      iconEmoji: '🌐',
+      type: ShopItemType.frame,
+      priceGold: 600,
+      accentColor: Color(0xFF00E5FF),
+    ),
+    ShopItem(
+      id: 'frame_diamond',
+      name: '💎 Kusursuz Elmas',
+      description: 'Göz kamaştırıcı kristal elmas yansımalı elit profil çerçevesi.',
+      iconEmoji: '💎',
+      type: ShopItemType.frame,
+      priceDiamonds: 20,
+      accentColor: Color(0xFF00E5FF),
     ),
     ShopItem(
       id: 'frame_cosmic',
@@ -174,15 +228,6 @@ class ShopCatalog {
       accentColor: Color(0xFFFF5252),
     ),
     ShopItem(
-      id: 'frame_emerald',
-      name: '❇️ Zümrüt Muhafız',
-      description: 'Doğanın ve zenginliğin parlak zümrüt kristal çerçevesi.',
-      iconEmoji: '❇️',
-      type: ShopItemType.frame,
-      priceGold: 250,
-      accentColor: Color(0xFF00E676),
-    ),
-    ShopItem(
       id: 'frame_ruby',
       name: '🩸 Kan Yakutu',
       description: 'Derin ve asil yakut kristali parıltılı kırmızı çerçeve.',
@@ -190,15 +235,6 @@ class ShopCatalog {
       type: ShopItemType.frame,
       priceDiamonds: 12,
       accentColor: Color(0xFFFF1744),
-    ),
-    ShopItem(
-      id: 'frame_obsidian',
-      name: '🖤 Karanlık Obsidyen',
-      description: 'Gizemli koyu mor gölgeli dayanıklı obsidyen çerçeve.',
-      iconEmoji: '🖤',
-      type: ShopItemType.frame,
-      priceGold: 350,
-      accentColor: Color(0xFF9575CD),
     ),
     ShopItem(
       id: 'frame_plasma',
@@ -237,6 +273,24 @@ class ShopCatalog {
       type: ShopItemType.title,
       priceGold: 250,
       accentColor: Color(0xFFFFB74D),
+    ),
+    ShopItem(
+      id: 'title_steam_billionaire',
+      name: 'Steam Milyarderi',
+      description: 'Altınlarını nereye harcayacağını bilemeyen gerçek koleksiyoncu unvanı.',
+      iconEmoji: '💰',
+      type: ShopItemType.title,
+      priceGold: 600,
+      accentColor: Color(0xFFFFD700),
+    ),
+    ShopItem(
+      id: 'title_grandmaster',
+      name: 'Efsanevi Büyükusta',
+      description: 'Steam inceleme evreninin zirvesinde yer alan nihai prestij unvanı.',
+      iconEmoji: '🏆',
+      type: ShopItemType.title,
+      priceGold: 1000,
+      accentColor: Color(0xFFFF5722),
     ),
     ShopItem(
       id: 'title_mindreader',
@@ -313,6 +367,15 @@ class ShopCatalog {
       type: ShopItemType.chest,
       priceGold: 100,
       accentColor: Color(0xFFFFB300),
+    ),
+    ShopItem(
+      id: 'chest_gold_5x',
+      name: '5x Çark Bileti Paketi',
+      description: 'İndirimli 5 adet Şans Çarkı bileti kazandırır.',
+      iconEmoji: '🎟️',
+      type: ShopItemType.chest,
+      priceGold: 400,
+      accentColor: Color(0xFFFF9100),
     ),
     ShopItem(
       id: 'chest_diamond_buy',

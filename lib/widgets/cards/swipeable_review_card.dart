@@ -223,7 +223,46 @@ class SwipeableReviewCard extends StatelessWidget {
                       ],
                     ),
                     if (provider.isImposterMode)
-                      if (provider.eliminatedRealCardIndices.contains(index))
+                      if (provider.isRoundFinished)
+                        if (index == provider.imposterCardIndex)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.purpleAccent, width: 1.2),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('🕵️ ', style: TextStyle(fontSize: 11)),
+                                Text(
+                                  'SAHTEKAR KART',
+                                  style: TextStyle(color: Colors.purpleAccent, fontSize: 11, fontWeight: FontWeight.w900),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.greenAccent, width: 0.8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('✅ ', style: TextStyle(fontSize: 10)),
+                                Text(
+                                  'Gerçek İnceleme',
+                                  style: TextStyle(color: Colors.greenAccent, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          )
+                      else if (provider.eliminatedRealCardIndices.contains(index))
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(

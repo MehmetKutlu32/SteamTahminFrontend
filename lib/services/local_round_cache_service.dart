@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/popular_games_catalog.dart';
 import '../models/game_item.dart';
 import '../models/game_review_dto.dart';
 import '../models/roguelike_models.dart';
@@ -41,6 +42,14 @@ class LocalRoundCacheService {
 
   static List<GameItem> _memoryGames = [];
 
+  // Son oynanan oyunların ID geçmişi (Mükerrer tur engelleme için)
+  static final List<int> _recentPlayedAppIds = [];
+  static const int _maxRecentPlayedHistory = 50;
+  static const String _keyPlayedAppIdsHistory = 'played_app_ids_history_v1';
+
+  // Geçmişte tamamlanmış turlardan toplanan gerçek inceleme havuzu (Sahtekar modu için sızıntısız kaynak)
+  static final List<MapEntry<int, GameReviewDto>> _historicalRealReviews = [];
+
   static List<RoundModel> _getMemoryQueue(GameMode mode) =>
       _memoryQueues[mode] ?? (_memoryQueues[GameMode.endless]!);
 
@@ -55,14 +64,51 @@ class LocalRoundCacheService {
   static List<RoundModel> getQueuedRounds([GameMode mode = GameMode.endless]) =>
       List.unmodifiable(_getMemoryQueue(mode));
 
+  /// Oynanan oyunu geçmişe kaydeder (Mükerrer önleme)
+  static Future<void> recordPlayedGame(RoundModel round) async {
+    if (!_recentPlayedAppIds.contains(round.appId)) {
+      _recentPlayedAppIds.insert(0, round.appId);
+      if (_recentPlayedAppIds.length > _maxRecentPlayedHistory) {
+        _recentPlayedAppIds.removeLast();
+      }
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList(
+          _keyPlayedAppIdsHistory,
+          _recentPlayedAppIds.map((id) => id.toString()).toList(),
+        );
+      } catch (_) {}
+    }
+
+    // Sahtekar modu için geçmiş turlardan gerçek yorum havuzu oluştur (Gelecek turlardan ASLA çekilmez)
+    for (final review in round.yorumlar) {
+      if (_historicalRealReviews.length < 100) {
+        _historicalRealReviews.add(MapEntry(round.appId, review));
+      }
+    }
+  }
+
+  /// Bir oyunun yakın zamanda oynanıp oynanmadığını kontrol eder
+  static bool isAppIdRecentlyPlayed(int appId) => _recentPlayedAppIds.contains(appId);
+
   /// Yerelde hazır bekleyen bir tur varsa anında çeker ve kuyruktan çıkarır (0 ms)
+  /// Kule modunda ve genel akışta mükerrer önleme için son oynananları eler
   static Future<RoundModel?> popNextCachedRound([GameMode mode = GameMode.endless]) async {
     final memQueue = _getMemoryQueue(mode);
     final key = _getKey(mode);
 
     // 1. Önce RAM kuyruğuna bak
     if (memQueue.isNotEmpty) {
-      final popped = memQueue.removeAt(0);
+      // Mümkünse yakın zamanda oynanmamış olan taze bir oyunu tercih et
+      int targetIndex = 0;
+      if (memQueue.length > 1) {
+        final unplayedIndex = memQueue.indexWhere((r) => !_recentPlayedAppIds.contains(r.appId));
+        if (unplayedIndex != -1) {
+          targetIndex = unplayedIndex;
+        }
+      }
+
+      final popped = memQueue.removeAt(targetIndex);
       _syncDiskQueue(mode);
       return popped;
     }
@@ -97,39 +143,22 @@ class LocalRoundCacheService {
     return null;
   }
 
-  /// Sahtekar modu için farklı bir oyundan (tercihen benzer türden) gerçek bir Steam incelemesi bulur
+  /// Sahtekar modu için sıradaki turları ASLA sızdırmadan, sadece geçmiş turlardan gerçek bir Steam incelemesi bulur
   static GameReviewDto? findRealReviewFromDifferentGame({
     required int excludeAppId,
     List<String> preferredGenres = const [],
   }) {
-    final allRounds = <RoundModel>[];
-    for (final queue in _memoryQueues.values) {
-      for (final r in queue) {
-        if (r.appId != excludeAppId && r.yorumlar.isNotEmpty) {
-          allRounds.add(r);
-        }
-      }
-    }
+    if (_historicalRealReviews.isEmpty) return null;
 
-    if (allRounds.isEmpty) return null;
+    final candidates = _historicalRealReviews
+        .where((entry) => entry.key != excludeAppId && entry.value.yorum.isNotEmpty)
+        .map((entry) => entry.value)
+        .toList();
+
+    if (candidates.isEmpty) return null;
 
     final random = Random();
-
-    // 1. Benzer tür eşleşmesi ara (preferredGenres ile kesişen)
-    if (preferredGenres.isNotEmpty) {
-      final matchingGenreRounds = allRounds.where((r) {
-        return r.turler.any((t) => preferredGenres.any((pg) => pg.trim().toLowerCase() == t.trim().toLowerCase()));
-      }).toList();
-
-      if (matchingGenreRounds.isNotEmpty) {
-        final chosenRound = matchingGenreRounds[random.nextInt(matchingGenreRounds.length)];
-        return chosenRound.yorumlar[random.nextInt(chosenRound.yorumlar.length)];
-      }
-    }
-
-    // 2. Eşleşen tür bulunamazsa veya aranmadıysa rastgele farklı bir oyundan çek
-    final chosenRound = allRounds[random.nextInt(allRounds.length)];
-    return chosenRound.yorumlar[random.nextInt(chosenRound.yorumlar.length)];
+    return candidates[random.nextInt(candidates.length)];
   }
 
   /// Arka planda sunucudan yeni çekilen turu yerel kuyruğa ekler
@@ -198,34 +227,58 @@ class LocalRoundCacheService {
     }
   }
 
-  /// Oyun arama listesini (tüm oyunları) yerelde önbelleğe alır
+  /// Oyun arama listesini yerelde önbelleğe alır ve popüler oyunlar ile birleştirir
   static const String _keyGamesList = 'cached_games_list_v1';
 
   static Future<void> saveGamesList(List<GameItem> games) async {
-    _memoryGames = List.from(games);
+    final mergedMap = <int, GameItem>{};
+    for (final g in PopularGamesCatalog.defaultPopularGames) {
+      mergedMap[g.appId] = g;
+    }
+    for (final g in games) {
+      mergedMap[g.appId] = g;
+    }
+    _memoryGames = mergedMap.values.toList();
+
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonList = games.map((g) => g.toJson()).toList();
+      final jsonList = _memoryGames.map((g) => g.toJson()).toList();
       await prefs.setString(_keyGamesList, jsonEncode(jsonList));
     } catch (_) {}
   }
 
-  /// Kayıtlı oyun listesini yerelden çeker
+  /// Kayıtlı oyun listesini yerelden çeker (Eksiksiz 600+ oyun garantisi)
   static Future<List<GameItem>> loadGamesList() async {
     if (_memoryGames.isNotEmpty) return _memoryGames;
+
+    final mergedMap = <int, GameItem>{};
+    for (final g in PopularGamesCatalog.defaultPopularGames) {
+      mergedMap[g.appId] = g;
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
       final gamesJson = prefs.getString(_keyGamesList);
-      if (gamesJson == null) return [];
+      if (gamesJson != null) {
+        final List<dynamic> decoded = jsonDecode(gamesJson);
+        for (final item in decoded) {
+          final game = GameItem.fromJson(item);
+          mergedMap[game.appId] = game;
+        }
+      }
 
-      final List<dynamic> decoded = jsonDecode(gamesJson);
-      _memoryGames = decoded.map((item) => GameItem.fromJson(item)).toList();
-      return _memoryGames;
+      // Oynanan oyun geçmişini de yükle
+      final playedHistory = prefs.getStringList(_keyPlayedAppIdsHistory);
+      if (playedHistory != null) {
+        _recentPlayedAppIds.clear();
+        _recentPlayedAppIds.addAll(playedHistory.map((s) => int.tryParse(s) ?? 0).where((id) => id > 0));
+      }
     } catch (e) {
       debugPrint('LocalRoundCache loadGamesList error: $e');
-      return [];
     }
+
+    _memoryGames = mergedMap.values.toList();
+    return _memoryGames;
   }
 
   /// Kalıcı profil verilerini diske yazar (Kullanıcıya özel izole anahtar)
